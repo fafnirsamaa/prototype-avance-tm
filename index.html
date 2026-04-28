@@ -1,0 +1,3127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Carrés de Soie — Hermès Paris</title>
+<meta name="description" content="Cinq carrés de soie 90×90 cm. L'expérience scrollytelling de la collection." />
+
+<!-- ───── Fonts (Manrope, Overpass Mono, EB Garamond italic) ───── -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@1,400;1,500&family=Manrope:wght@300;400;500;700&family=Overpass+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<!-- ───── CDN libraries ─────────────────────────────────────────── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+/* ═════════════════════════════════════════════════════════════════
+   1. DESIGN TOKENS — sourced from /mnt/project/hermes-design-system.md
+   No invented values. Every variable maps 1:1 to the Hermès system.
+   ═════════════════════════════════════════════════════════════════ */
+:root {
+  /* Colors */
+  --color-black:        #000000;
+  --color-white:        #FFFFFF;
+  --color-cream-light:  #FFFCF7;   /* primary surface */
+  --color-cream-medium: #FCF7F1;
+  --color-cream-alt:    #FAF9F5;
+  --color-near-black:   #141413;
+  --color-gray-medium:  #696969;   /* muted text, breadcrumb, footer links */
+  --color-gray-dark:    #444444;
+
+  /* Overlays */
+  --overlay-panel:     rgba(255, 252, 247, 0.93);
+  --overlay-sticky:    rgba(255, 252, 247, 0.953);
+  --overlay-white-60:  rgba(255, 255, 255, 0.6);
+  --border-warm:       rgba(246, 241, 235, 0.6);
+  --border-subtle:     rgba(31, 30, 29, 0.4);
+
+  /* Type families */
+  --font-primary:   "Manrope", "Roboto", sans-serif;                    /* body, UI */
+  --font-secondary: "Overpass Mono", "Gill Sans MT", calibri, sans-serif; /* labels, titles */
+  --font-edito:     "EB Garamond", "Bell MT", "Times New Roman", serif;   /* editorial italics */
+
+  /* Type scale — headings */
+  --fs-heading-xxl: 2.125rem;  /* 34px */
+  --fs-heading-xl:  1.875rem;  /* 30px */
+  --fs-heading-l:   1.625rem;  /* 26px */
+  --fs-heading-m:   1.5rem;    /* 24px — H1 product title */
+  --fs-heading-s:   1.25rem;
+  --fs-heading-xs:  1.125rem;
+
+  /* Type scale — body */
+  --fs-body-xl: 1rem;
+  --fs-body-l:  .875rem;       /* 14px — paragraph-medium / price */
+  --fs-body-m:  .75rem;        /* 12px — paragraph-small / labels */
+  --fs-body-s:  .625rem;       /* 10px — nav, breadcrumb */
+
+  /* Weights */
+  --fw-300: 300; --fw-400: 400; --fw-500: 500; --fw-700: 700;
+
+  /* Spacing */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  16px;
+  --sp-4:  24px;
+  --sp-5:  32px;
+  --sp-6:  48px;
+  --sp-7:  70px;
+
+  /* Component sizes */
+  --header-height:      130px;
+  --header-menu-top:    78px;
+  --cta-height:         48px;
+  --icon-size:          24px;
+  --swatch-size:        59px;
+  --thumb-size:         40px;
+  --sticky-bar-height:  70px;
+  --product-panel-w:    375px;
+  --container-max:      1084px;
+
+  /* Border radius */
+  --r-none:  0px;
+  --r-small: 2px;
+  --r-pill:  58px;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   2. RESET & BASE
+   ═════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; }
+html { scroll-behavior: auto; }     /* GSAP drives scroll-coupled motion */
+body {
+  font-family: var(--font-primary);
+  font-size: 14px;                           /* min font size = 14px */
+  font-weight: var(--fw-400);
+  color: var(--color-black);
+  background: var(--color-cream-light);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+img, svg { display: block; max-width: 100%; }
+button { font: inherit; cursor: pointer; background: none; border: none; color: inherit; }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+
+/* Skip link */
+.skip-link {
+  position: absolute; top: -40px; left: 8px;
+  background: var(--color-black); color: var(--color-white);
+  padding: 8px 16px; z-index: 1000;
+  font-family: var(--font-secondary); font-size: 14px;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.skip-link:focus { top: 8px; }
+
+/* Universal focus ring (1.5px per design system) */
+:focus-visible {
+  outline: 1.5px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   3. TYPOGRAPHY UTILITY CLASSES (min font size enforced at 14px)
+   ═════════════════════════════════════════════════════════════════ */
+.heading-4 {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-300);
+  line-height: 22px; text-transform: uppercase;
+}
+.heading-5 {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-300);
+  line-height: 20px; text-transform: uppercase;
+}
+.label-menu-nav {
+  font-family: var(--font-primary);
+  font-size: 14px; font-weight: var(--fw-700);
+  line-height: 18px; text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.label-medium {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  line-height: 18px; text-transform: uppercase;
+}
+.label-small {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  line-height: 18px; text-transform: uppercase;
+}
+.paragraph-medium {
+  font-family: var(--font-primary);
+  font-size: 14px; font-weight: var(--fw-400);
+  line-height: 22px;
+}
+.paragraph-small {
+  font-family: var(--font-primary);
+  font-size: 14px; font-weight: var(--fw-400);
+  line-height: 22px;
+}
+.title-light {
+  font-family: var(--font-primary);
+  font-size: 14px; font-weight: var(--fw-400);
+  color: var(--color-gray-medium);
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   4. HEADER (matches hermes.com — logo SVG centered, labelled actions)
+   ═════════════════════════════════════════════════════════════════ */
+.header-container {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--header-height);
+  z-index: 100;
+  background: transparent;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.header-container.is-scrolled {
+  background: var(--overlay-panel);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.header-container > * { pointer-events: auto; }
+
+.header-top {
+  height: var(--header-menu-top);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 var(--sp-4);
+  gap: var(--sp-4);
+}
+
+/* ── Search (left column) ──────────────────────────────────────── */
+.header-search {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  max-width: 280px;
+  border-bottom: 1px solid var(--color-black);
+  padding-bottom: 4px;
+  justify-self: start;
+}
+.header-search input {
+  border: none; background: transparent; outline: none;
+  font-family: var(--font-primary); font-size: 14px;
+  color: var(--color-black); width: 200px;
+  padding: 0;
+}
+.header-search input::placeholder { color: var(--color-black); }
+
+/* ── Logo (center column) ──────────────────────────────────────── */
+.header-logo {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--color-black);
+  justify-self: center;
+}
+.header-logo img { height: 56px; width: auto; display: block; }
+
+/* ── Account + Cart (right column) ─────────────────────────────── */
+.header-actions {
+  display: inline-flex; align-items: center; gap: var(--sp-4);
+  justify-self: end;
+}
+.header-action {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-family: var(--font-primary); font-size: 14px;
+  font-weight: var(--fw-400); color: var(--color-black);
+  padding: 4px 0;
+  position: relative;
+}
+.header-action:hover .header-action-label { text-decoration: underline; }
+.header-action-label { line-height: 1; }
+
+/* Universal icon styling */
+.header-icon {
+  width: var(--icon-size); height: var(--icon-size);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--color-black);
+  flex: 0 0 auto;
+}
+.header-cart-count {
+  display: inline-block;
+  font-family: var(--font-secondary); font-size: 14px; font-weight: var(--fw-500);
+  color: var(--color-black);
+  margin-left: 2px;
+}
+
+/* ── Nav (second row) ──────────────────────────────────────────── */
+.header-nav {
+  height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--sp-4);
+  border-top: 1px solid var(--border-warm);
+}
+.header-nav a {
+  /* Lighter than the global .label-menu-nav class for header chrome.
+     Hermès menu links read as fine, spaced text — not bold buttons.   */
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--fw-400);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--color-black);
+  position: relative;
+  padding: 4px 0;
+}
+.header-nav a:hover::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -2px;
+  height: 1px; background: var(--color-black);
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   5. WEBGL CANVAS — fixed full-viewport stage
+   ═════════════════════════════════════════════════════════════════ */
+#webgl-canvas {
+  position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 1;
+  background: var(--color-cream-light);
+  pointer-events: auto;
+}
+#webgl-canvas canvas { display: block; width: 100%; height: 100%; }
+
+/* The carré is always behind the chrome, but the cursor still hits the canvas
+   so the silk hover responds even as text scrolls past. */
+
+/* ═════════════════════════════════════════════════════════════════
+   6. MAIN — scroll sections sit ABOVE the canvas (z-index 2)
+   ═════════════════════════════════════════════════════════════════ */
+.main-element {
+  position: relative;
+  z-index: 2;
+  /* CRITICAL: main is z-index 2, canvas is z-index 1. Without
+     pointer-events: none here, hit-testing finds <main> at every
+     pixel and the canvas never receives mouse events — silk hover
+     would be completely dead. Children that need clicks (act-copy,
+     product cards, breadcrumb links, etc.) keep their default
+     pointer-events: auto and still work, because pointer-events
+     does not inherit. */
+  pointer-events: none;
+}
+.main-element a,
+.main-element button,
+.main-element input,
+.main-element label,
+.main-element .act-copy,
+.main-element .product-card,
+.main-element .qty-selector,
+.main-element .breadcrumb {
+  /* Defensive: anything interactive inside main keeps explicit auto */
+  pointer-events: auto;
+}
+
+/* ───── Acts (4 scroll-coupled chapters) ───── */
+.act {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding: 0 var(--sp-6);
+  position: relative;
+  pointer-events: none;          /* CRITICAL: lets cursor pass through to canvas */
+}
+.act-inner {
+  width: 100%; max-width: var(--container-max); margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr;
+  align-items: center; gap: var(--sp-6);
+  pointer-events: none;
+}
+.act-copy { pointer-events: auto; }       /* only the text panel catches events */
+.act-copy * { pointer-events: auto; }
+
+.act .act-copy {
+  /* Frosted-glass backdrop — keeps the editorial copy legible
+     when the carré drifts behind it during scroll transitions.
+     Mimics the .product-selector overlay from hermes.com.        */
+  display: flex; flex-direction: column; gap: var(--sp-4);
+  opacity: 0;                              /* GSAP reveals on enter */
+  max-width: 420px;
+  padding: var(--sp-5);
+  background: var(--overlay-panel);                 /* rgba(255,252,247,0.93) */
+  backdrop-filter: blur(20px) saturate(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(1.05);
+}
+.act:nth-child(odd) .act-copy { justify-self: end;   grid-column: 2; }
+.act:nth-child(even) .act-copy { justify-self: start; grid-column: 1; }
+
+.act-credit {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--color-gray-medium);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.act-credit::before {
+  content: ''; width: 32px; height: 1px; background: currentColor;
+}
+.act-quote {
+  font-family: var(--font-edito);
+  font-style: italic;
+  font-size: 2.125rem;       /* --fs-heading-xxl */
+  font-weight: var(--fw-500);
+  line-height: 1.2;
+  color: var(--color-black);
+}
+.act-meta {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-gray-medium);
+  line-height: 22px;
+}
+.act-name {
+  font-family: var(--font-secondary);
+  font-size: var(--fs-heading-m);
+  font-weight: var(--fw-400);
+  text-transform: uppercase;
+  line-height: 34px;
+  color: var(--color-black);
+}
+.act-price {
+  font-family: var(--font-primary);
+  font-size: 14px; font-weight: var(--fw-400);
+  color: var(--color-black);
+  line-height: 22px;
+}
+
+/* Scroll cue under hero */
+.scroll-cue {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--color-gray-medium);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  pointer-events: none;
+}
+.scroll-cue .line {
+  width: 1px; height: 32px; background: var(--color-gray-medium);
+  transform-origin: top;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   7. COLLECTION GRID
+   ═════════════════════════════════════════════════════════════════ */
+#collection {
+  background: var(--color-cream-light);
+  position: relative;
+  padding: 120px var(--sp-4) 80px;
+  z-index: 2;
+}
+.collection-inner {
+  max-width: var(--container-max); margin: 0 auto;
+}
+.collection-header { text-align: center; margin-bottom: var(--sp-6); }
+.collection-eyebrow {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--color-gray-medium);
+  margin-bottom: var(--sp-3);
+}
+.collection-title {
+  font-family: var(--font-edito);
+  font-style: italic;
+  font-size: var(--fs-heading-xl);
+  font-weight: var(--fw-500);
+  color: var(--color-black);
+  line-height: 1.2;
+  margin-bottom: var(--sp-2);
+}
+.collection-sub {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-gray-medium);
+  max-width: 480px; margin: 0 auto;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-6) var(--sp-4);
+  margin-top: 64px;
+}
+.product-card {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.product-card-img {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  background: var(--color-cream-medium);
+  position: relative;
+  overflow: hidden;
+}
+.product-card-img img {
+  width: 100% !important; height: 100% !important;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-card:hover .product-card-img img { transform: scale(1.03); }
+.product-card-name {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--fw-400);
+  color: var(--color-black);
+}
+.product-card-price {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-black);
+}
+.product-card-actions {
+  display: flex; align-items: stretch;
+  margin-top: var(--sp-2);
+  height: 36px;
+}
+
+/* ───── Quantity selector ───── */
+.qty-selector {
+  display: flex; align-items: center;
+  border: 1px solid var(--color-black);
+  margin-right: -1px; /* joins with split CTA */
+  height: 36px;
+}
+.qty-selector button {
+  width: 32px; height: 100%;
+  font-family: var(--font-secondary);
+  font-size: 16px; font-weight: var(--fw-400);
+  color: var(--color-black);
+  display: flex; align-items: center; justify-content: center;
+  transition: background-color 0.2s ease;
+}
+.qty-selector button:hover { background: var(--color-black); color: var(--color-white); }
+.qty-selector .qty-value {
+  width: 36px; text-align: center;
+  font-family: var(--font-secondary); font-size: 14px;
+  border: none; background: transparent; outline: none;
+  font-weight: var(--fw-500);
+  color: var(--color-black);
+  -moz-appearance: textfield;
+}
+.qty-selector .qty-value::-webkit-outer-spin-button,
+.qty-selector .qty-value::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   8. CTA BUTTON (filled "Add to Cart")
+   ═════════════════════════════════════════════════════════════════ */
+.split-btn {
+  display: inline-flex; align-items: stretch;
+  height: var(--cta-height);
+}
+.split-btn--compact { height: 36px; flex: 1; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--fw-400);
+  padding: var(--sp-2) var(--sp-5);
+  height: 100%;
+  white-space: nowrap;
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.btn:focus-visible { outline-offset: -2px; }
+
+.btn--add {
+  background: var(--color-black);
+  color: var(--color-white);
+  border: 1px solid var(--color-black);
+  border-radius: var(--r-small);
+  flex: 1;
+}
+.btn--add:hover { background: #1a1a1a; }
+.btn--add.is-added {
+  background: var(--color-cream-light);
+  color: var(--color-black);
+}
+
+.split-btn--compact .btn {
+  font-size: 14px; padding: 0 var(--sp-3);
+}
+
+/* ───── Find in store ───── */
+.action-button {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-family: var(--font-primary); font-size: 14px;
+  font-weight: var(--fw-500); text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--color-black);
+  margin-top: var(--sp-2);
+  align-self: flex-start;
+}
+.action-button:hover { text-decoration: underline; }
+
+/* ═════════════════════════════════════════════════════════════════
+   9. BREADCRUMB
+   ═════════════════════════════════════════════════════════════════ */
+.breadcrumb {
+  max-width: var(--container-max); margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+  position: relative; z-index: 2;
+  background: var(--color-cream-light);
+}
+.breadcrumb ol {
+  display: flex; flex-wrap: wrap;
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  text-transform: uppercase; color: var(--color-gray-medium);
+  gap: var(--sp-2);
+}
+.breadcrumb li { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.breadcrumb a { text-decoration: underline; }
+.breadcrumb a:hover { color: var(--color-black); }
+.breadcrumb li:not(:last-child)::after { content: '|'; color: var(--color-gray-medium); }
+
+/* ═════════════════════════════════════════════════════════════════
+   10. STICKY BOTTOM BAR (appears on scroll past hero, 70px)
+   ═════════════════════════════════════════════════════════════════ */
+.sticky-cta {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--sticky-bar-height);
+  background: var(--overlay-sticky);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  padding: var(--sp-2) var(--sp-4);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-4);
+  transform: translateY(100%);
+  border-top: 1px solid var(--border-warm);
+}
+.sticky-cta-left {
+  display: flex; align-items: center; gap: var(--sp-3);
+  flex: 1; min-width: 0;
+}
+.sticky-thumb {
+  width: var(--thumb-size); height: var(--thumb-size);
+  background: var(--color-cream-medium);
+  flex: 0 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+.sticky-thumb img { width: 100% !important; height: 100% !important; display: block; object-fit: cover; }
+.sticky-info {
+  display: flex; flex-direction: column;
+  font-family: var(--font-primary);
+  min-width: 0;
+}
+.sticky-info .name {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-400);
+  text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sticky-info .price {
+  font-size: 14px; color: var(--color-gray-medium);
+}
+.sticky-cta-right {
+  display: flex; align-items: stretch; flex: 0 0 auto;
+}
+.sticky-cta-right .split-btn { height: 44px; }
+.sticky-cta-right .btn { font-size: 14px; padding: 0 var(--sp-4); }
+
+/* ═════════════════════════════════════════════════════════════════
+   11. CART DRAWER
+   ═════════════════════════════════════════════════════════════════ */
+.cart-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 420px; max-width: 100vw;
+  background: var(--color-cream-light);
+  z-index: 200;
+  transform: translateX(100%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border-warm);
+}
+.cart-drawer.is-open { transform: translateX(0); }
+.cart-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 199;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.cart-overlay.is-open { opacity: 1; pointer-events: auto; }
+
+.cart-header {
+  padding: var(--sp-4);
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border-warm);
+}
+.cart-header h2 {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-300);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.cart-close {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-primary); font-size: 18px;
+}
+
+.cart-items {
+  flex: 1; overflow-y: auto;
+  padding: var(--sp-4);
+}
+.cart-empty {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 80px var(--sp-4);
+  gap: var(--sp-3);
+}
+.cart-empty p {
+  font-family: var(--font-edito); font-style: italic;
+  font-size: 20px; color: var(--color-gray-medium);
+}
+.cart-item {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border-warm);
+}
+.cart-item-thumb {
+  width: 80px; height: 80px;
+  background: var(--color-cream-medium);
+  overflow: hidden;
+}
+.cart-item-thumb img { width: 100% !important; height: 100% !important; display: block; object-fit: cover; }
+.cart-item-info { display: flex; flex-direction: column; gap: 4px; }
+.cart-item-name {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-400);
+  text-transform: uppercase;
+  line-height: 18px;
+}
+.cart-item-price {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-black);
+}
+.cart-item-qty {
+  font-family: var(--font-secondary);
+  font-size: 14px;
+  color: var(--color-gray-medium);
+  text-transform: uppercase;
+  margin-top: var(--sp-1);
+}
+.cart-item-remove {
+  align-self: flex-start;
+  font-family: var(--font-secondary);
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--color-gray-medium);
+  text-decoration: underline;
+}
+.cart-item-remove:hover { color: var(--color-black); }
+
+.cart-footer {
+  padding: var(--sp-4);
+  border-top: 1px solid var(--border-warm);
+  display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.cart-total {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-primary);
+  font-size: 16px;
+}
+.cart-total .label { color: var(--color-gray-medium); }
+.cart-total .amount { font-weight: var(--fw-500); }
+
+/* ═════════════════════════════════════════════════════════════════
+   12. FOOTER (cream BG, 4-column inner)
+   ═════════════════════════════════════════════════════════════════ */
+.page-footer {
+  background: var(--color-cream-light);
+  position: relative;
+  z-index: 2;
+  padding: 64px var(--sp-4) 32px;
+  margin-bottom: var(--sticky-bar-height);
+}
+.main-footer {
+  max-width: var(--container-max); margin: 0 auto;
+  background: var(--color-white);
+  padding: var(--sp-6) var(--sp-5);
+  display: grid;
+  grid-template-columns: 272px 115px 188px 234px;
+  gap: var(--sp-6);
+  justify-content: space-between;
+}
+.footer-col h3 {
+  margin-bottom: var(--sp-3);
+  color: var(--color-black);
+}
+.footer-col ul { display: flex; flex-direction: column; gap: 6px; }
+.footer-col li a {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-gray-medium);
+  line-height: 22px;
+}
+.footer-col li a:hover { text-decoration: underline; color: var(--color-black); }
+
+.footer-bottom {
+  max-width: var(--container-max);
+  margin: var(--sp-5) auto 0;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-warm);
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--color-gray-medium);
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   13. LOADER (initial silk reveal)
+   ═════════════════════════════════════════════════════════════════ */
+.loader {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--color-cream-light);
+  display: flex; align-items: center; justify-content: center;
+}
+.loader-inner {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-4);
+}
+.loader-mark,
+.loader-logo {
+  height: 80px;
+  width: auto;
+  display: block;
+  color: var(--color-black);
+}
+.loader-progress {
+  width: 140px; height: 1px; background: var(--border-warm);
+  position: relative; overflow: hidden;
+}
+.loader-progress::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: var(--color-black);
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   16. ROUTE VIEWS — product page + M2UX deliverables
+   ═════════════════════════════════════════════════════════════════ */
+.route-view {
+  position: relative;
+  z-index: 3;
+  background: var(--color-cream-light);
+  min-height: 100vh;
+  padding: calc(var(--header-height) + var(--sp-6)) var(--sp-4) var(--sp-6);
+  display: none;
+}
+.route-view.is-active { display: block; }
+
+/* When ANY route view is active, hide the main scrollytelling chrome.
+   The selector was previously #main-element (id) but the element has
+   class="main-element" id="main" — the id doesn't match. Using the
+   class selector now. */
+body.has-route-view .main-element,
+body.has-route-view .sticky-cta { display: none !important; }
+body.has-route-view #webgl-canvas { opacity: 0; pointer-events: none; }
+body.has-route-view .loader { display: none !important; }
+
+/* Deliverable pages additionally hide the e-commerce chrome (header
+   + footer) — they're academic artefacts, not commerce pages. The
+   product page keeps the full Hermès chrome since it IS a commerce
+   page. The route view's own breathing room is handled below. */
+body.is-deliverable .header-container,
+body.is-deliverable .page-footer { display: none !important; }
+body.is-deliverable .route-view { padding-top: var(--sp-5); }
+
+.route-inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+/* ── Back link (used by all route views) ─────────────────────────── */
+.route-back {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--color-gray-medium);
+  margin-bottom: var(--sp-5);
+  cursor: pointer;
+}
+.route-back:hover { color: var(--color-black); }
+.route-back::before { content: '←'; font-size: 16px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   PRODUCT PAGE
+   ───────────────────────────────────────────────────────────────── */
+.product-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(380px, 1fr);
+  gap: var(--sp-6);
+  align-items: start;
+}
+.product-image {
+  aspect-ratio: 1 / 1;
+  background: var(--color-cream-medium);
+  overflow: hidden;
+  position: relative;
+}
+.product-image img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-image:hover img { transform: scale(1.02); }
+
+.product-thumbs {
+  display: flex; gap: var(--sp-2); margin-top: var(--sp-3);
+}
+.product-thumb {
+  width: 64px; height: 64px;
+  background: var(--color-cream-medium);
+  cursor: pointer;
+  outline: 1px solid transparent;
+  transition: outline-color 0.2s ease;
+}
+.product-thumb.is-active { outline-color: var(--color-black); }
+.product-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.product-info {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding-top: var(--sp-2);
+}
+.product-eyebrow {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--color-gray-medium);
+}
+.product-title {
+  font-family: var(--font-secondary);
+  font-size: var(--fs-heading-m);
+  font-weight: var(--fw-400);
+  text-transform: uppercase;
+  line-height: 34px;
+  color: var(--color-black);
+}
+.product-designer {
+  font-family: var(--font-edito);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--color-black);
+  margin-bottom: var(--sp-2);
+}
+.product-description {
+  font-family: var(--font-primary);
+  font-size: 14px; line-height: 22px;
+  color: var(--color-near-black);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border-warm);
+  border-bottom: 1px solid var(--border-warm);
+}
+.product-attribute {
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  font-size: 14px;
+}
+.product-attribute .label {
+  font-family: var(--font-secondary);
+  font-size: 14px; text-transform: uppercase;
+  color: var(--color-gray-medium);
+  min-width: 110px;
+}
+.product-attribute .value { color: var(--color-black); }
+.product-price-large {
+  font-family: var(--font-primary);
+  font-size: 18px; font-weight: var(--fw-400);
+  margin-top: var(--sp-3);
+}
+.product-cta-row {
+  display: flex; align-items: stretch;
+  height: var(--cta-height);
+  margin-top: var(--sp-3);
+}
+.product-cta-row .qty-selector { height: var(--cta-height); }
+.product-cta-row .qty-selector button { width: 40px; }
+.product-cta-row .qty-selector .qty-value { width: 44px; }
+.product-cta-row .split-btn { flex: 1; height: var(--cta-height); }
+.product-find-store {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-family: var(--font-primary); font-size: 14px;
+  font-weight: var(--fw-500); text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-black);
+  margin-top: var(--sp-3);
+  align-self: flex-start;
+  cursor: pointer;
+}
+.product-find-store:hover { text-decoration: underline; }
+
+.product-other-carres {
+  margin-top: 96px;
+  border-top: 1px solid var(--border-warm);
+  padding-top: var(--sp-6);
+}
+.product-other-title {
+  font-family: var(--font-edito); font-style: italic;
+  font-size: var(--fs-heading-xl); font-weight: var(--fw-500);
+  text-align: center; margin-bottom: var(--sp-5);
+}
+.product-other-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   M2UX DELIVERABLES — shared structure
+   ───────────────────────────────────────────────────────────────── */
+.deliv-header {
+  border-bottom: 1px solid var(--color-black);
+  padding-bottom: var(--sp-4);
+  margin-bottom: var(--sp-6);
+  display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+.deliv-eyebrow {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--color-gray-medium);
+}
+.deliv-title {
+  font-family: var(--font-edito); font-style: italic;
+  font-size: var(--fs-heading-xxl); font-weight: var(--fw-500);
+  line-height: 1.15;
+  color: var(--color-black);
+  margin-top: var(--sp-2);
+}
+.deliv-meta {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-400);
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--color-gray-medium);
+  text-align: right;
+}
+.deliv-section-title {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-700);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--color-black);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.deliv-list {
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  font-family: var(--font-primary); font-size: 14px; line-height: 22px;
+}
+.deliv-list-item {
+  display: flex; gap: var(--sp-2);
+  padding-left: 0;
+}
+.deliv-list-item::before {
+  content: '—';
+  color: var(--color-gray-medium);
+  flex: 0 0 auto;
+}
+
+/* ─────────── Proto Persona ─────────── */
+.persona-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-6);
+}
+.persona-card {
+  background: var(--color-white);
+  padding: var(--sp-5);
+  display: flex; flex-direction: column; gap: var(--sp-4);
+  border: 1px solid var(--border-warm);
+}
+.persona-avatar {
+  width: 100%; aspect-ratio: 1/1;
+  background: linear-gradient(135deg, #FFFCF7 0%, #F5EBD7 50%, #E8D9BD 100%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.persona-avatar::after {
+  content: 'IB';
+  font-family: var(--font-edito); font-style: italic;
+  font-size: 96px; color: rgba(20, 20, 19, 0.18);
+  letter-spacing: -4px;
+}
+.persona-name {
+  font-family: var(--font-secondary);
+  font-size: 18px; font-weight: var(--fw-400);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.persona-stats {
+  display: flex; flex-direction: column; gap: 6px;
+  font-family: var(--font-primary); font-size: 14px;
+  color: var(--color-gray-medium);
+  line-height: 22px;
+}
+.persona-quote {
+  font-family: var(--font-edito); font-style: italic;
+  font-size: 18px; line-height: 1.4;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border-warm);
+  border-bottom: 1px solid var(--border-warm);
+  color: var(--color-black);
+}
+.persona-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5);
+}
+.persona-cols .col {
+  padding: var(--sp-4);
+  background: var(--color-white);
+  border: 1px solid var(--border-warm);
+}
+.persona-empathy {
+  margin-top: var(--sp-6);
+}
+.persona-empathy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+}
+.persona-empathy-cell {
+  background: var(--color-white);
+  padding: var(--sp-4);
+}
+.persona-empathy-cell h4 {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-700);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--color-black);
+  margin-bottom: var(--sp-2);
+}
+.persona-empathy-cell ul {
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  font-size: 14px; line-height: 22px;
+  color: var(--color-near-black);
+}
+
+/* ─────────── Experience Map ─────────── */
+.expmap-stages {
+  overflow-x: auto;
+  margin: 0 calc(var(--sp-4) * -1) var(--sp-6);
+  padding: 0 var(--sp-4);
+}
+.expmap-grid {
+  display: grid;
+  grid-template-columns: 160px repeat(6, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  min-width: 1080px;
+}
+.expmap-cell {
+  background: var(--color-white);
+  padding: var(--sp-3);
+  font-size: 14px; line-height: 20px;
+  color: var(--color-near-black);
+}
+.expmap-cell--header {
+  background: var(--color-black);
+  color: var(--color-white);
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  text-transform: uppercase; letter-spacing: 1px;
+  text-align: center;
+}
+.expmap-cell--label {
+  background: var(--color-cream-medium);
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-500);
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--color-gray-dark);
+}
+.expmap-emotion {
+  display: flex; gap: 4px; align-items: center;
+  font-family: var(--font-secondary); font-size: 14px;
+}
+.expmap-bar {
+  height: 8px; background: var(--color-cream-medium);
+  position: relative; flex: 1;
+}
+.expmap-bar-fill {
+  position: absolute; top: 0; bottom: 0;
+  background: var(--color-black);
+  transform-origin: left;
+}
+
+/* ─────────── User Flow ─────────── */
+.flow-step {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: var(--sp-4);
+  padding: var(--sp-5) 0;
+  border-bottom: 1px solid var(--border-warm);
+}
+.flow-step:last-child { border-bottom: none; }
+.flow-step-num {
+  font-family: var(--font-edito); font-style: italic;
+  font-size: 56px; line-height: 1;
+  color: var(--color-gray-medium);
+}
+.flow-step-content { display: flex; flex-direction: column; gap: var(--sp-3); }
+.flow-step-meta {
+  display: flex; gap: var(--sp-3); align-items: center;
+  font-family: var(--font-secondary); font-size: 14px;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--color-gray-medium);
+}
+.flow-step-meta .device-badge {
+  background: var(--color-near-black); color: var(--color-white);
+  padding: 2px 10px;
+  font-size: 14px;
+}
+.flow-step-name {
+  font-family: var(--font-secondary);
+  font-size: 22px; font-weight: var(--fw-400);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--color-black);
+}
+.flow-step-action {
+  font-family: var(--font-primary);
+  font-size: 14px; line-height: 22px;
+  color: var(--color-near-black);
+}
+.flow-microint {
+  background: var(--color-cream-medium);
+  padding: var(--sp-3) var(--sp-4);
+  border-left: 2px solid var(--color-black);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+.flow-microint-label {
+  font-family: var(--font-secondary);
+  font-size: 14px; font-weight: var(--fw-700);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--color-black);
+}
+.flow-microint-row {
+  font-size: 14px; line-height: 22px;
+}
+.flow-microint-row strong {
+  font-family: var(--font-secondary);
+  font-weight: var(--fw-500);
+  text-transform: uppercase;
+  font-size: 14px;
+  margin-right: 6px;
+}
+.flow-benefit {
+  display: flex; gap: var(--sp-2); align-items: baseline;
+  font-family: var(--font-edito); font-style: italic;
+  font-size: 16px; line-height: 1.5;
+  color: var(--color-near-black);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-white);
+  border: 1px solid var(--border-warm);
+}
+.flow-benefit::before {
+  content: 'Bénéfice';
+  font-family: var(--font-secondary);
+  font-style: normal; font-weight: var(--fw-700);
+  font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--color-black);
+  flex: 0 0 auto;
+}
+.flow-benefit::after { content: '·'; margin-left: -4px; }
+
+@media (max-width: 1024px) {
+  .product-layout { grid-template-columns: 1fr; }
+  .persona-grid { grid-template-columns: 1fr; }
+  .product-other-grid { grid-template-columns: 1fr 1fr; }
+  .deliv-title { font-size: 26px; }
+}
+@media (max-width: 1024px) {
+  .header-nav { display: none; }
+  .act-inner { grid-template-columns: 1fr; }
+  .act:nth-child(odd) .act-copy,
+  .act:nth-child(even) .act-copy {
+    grid-column: 1; justify-self: center; text-align: center;
+    align-items: center;
+  }
+  .act-credit::before { display: none; }
+  .act-quote { font-size: 1.625rem; }
+  .collection-grid { grid-template-columns: repeat(2, 1fr); gap: var(--sp-5); }
+  .main-footer { grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+  .cart-drawer { width: 100vw; }
+}
+@media (max-width: 600px) {
+  .collection-grid { grid-template-columns: 1fr; }
+  .main-footer { grid-template-columns: 1fr; }
+  .sticky-cta-right .split-btn { width: 100%; }
+  .sticky-cta-right .btn--add { border-radius: var(--r-small); }
+  .breadcrumb ol { font-size: 12px; }
+  .header-action-label { display: none; }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   15. REDUCED MOTION
+   ═════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  /* WebGL shader displacement is gated in JS by the same media query. */
+}
+
+/* High contrast (Windows) */
+@media (forced-colors: active) {
+  .btn--add { border: 1px solid CanvasText; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ═════════════════ Skip link ════════════════════════════════════ -->
+<a href="#main" class="skip-link">Aller au contenu principal</a>
+
+<!-- ═════════════════ Loader ═══════════════════════════════════════ -->
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <img class="loader-logo"
+         src="https://res.cloudinary.com/dh6a0kqtg/image/upload/v1777317246/Logo_Herme%CC%80s_black_z0tup8.svg"
+         alt="Hermès Paris" />
+    <div class="loader-progress"><div id="loader-bar"></div></div>
+  </div>
+</div>
+
+<!-- ═════════════════ HEADER (matches hermes.com 1:1) ══════════════ -->
+<header class="header-container" role="banner">
+  <div class="header-top">
+    <!-- Search (left) -->
+    <form class="header-search" role="search" onsubmit="return false;">
+      <span class="header-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="10.5" cy="10.5" r="6.5"/>
+          <line x1="20" y1="20" x2="15.2" y2="15.2"/>
+        </svg>
+      </span>
+      <label class="sr-only" for="search-input">Rechercher</label>
+      <input type="text" id="search-input" placeholder="Rechercher" autocomplete="off"/>
+    </form>
+
+    <!-- Logo (centered) — official Hermès SVG -->
+    <a class="header-logo" href="#" aria-label="Hermès Paris — accueil">
+      <img src="https://res.cloudinary.com/dh6a0kqtg/image/upload/v1777317246/Logo_Herme%CC%80s_black_z0tup8.svg"
+           alt="Hermès Paris" />
+    </a>
+
+    <!-- Account + Cart (right, with labels) -->
+    <div class="header-actions">
+      <button class="header-action" aria-label="Mon compte">
+        <span class="header-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+          </svg>
+        </span>
+        <span class="header-action-label">Compte</span>
+      </button>
+      <button class="header-action" aria-label="Mon panier" id="cart-toggle">
+        <span class="header-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M5 7h14l-1.5 12.5a1 1 0 0 1-1 .9H7.5a1 1 0 0 1-1-.9L5 7z"/>
+            <path d="M9 7V5a3 3 0 0 1 6 0v2"/>
+          </svg>
+        </span>
+        <span class="header-action-label">Panier</span>
+        <span class="header-cart-count" id="cart-count" aria-live="polite" aria-atomic="true">0</span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="header-nav" aria-label="Navigation principale">
+    <a href="#" class="label-menu-nav">Femme</a>
+    <a href="#" class="label-menu-nav">Homme</a>
+    <a href="#" class="label-menu-nav">Maroquinerie</a>
+    <a href="#" class="label-menu-nav">Bijouterie</a>
+    <a href="#" class="label-menu-nav">Montres</a>
+    <a href="#" class="label-menu-nav">Parfums et maquillage</a>
+    <a href="#" class="label-menu-nav">Maison et art de vivre</a>
+    <a href="#" class="label-menu-nav">Équitation</a>
+    <a href="#" class="label-menu-nav">Cadeaux</a>
+    <a href="#" class="label-menu-nav">Éditions spéciales et services</a>
+    <a href="#" class="label-menu-nav">A propos d'Hermès</a>
+  </nav>
+</header>
+
+<!-- ═════════════════ WEBGL CANVAS (fixed, behind everything) ═════ -->
+<div id="webgl-canvas" aria-hidden="true"></div>
+
+<!-- ═════════════════ MAIN ═════════════════════════════════════════ -->
+<main class="main-element" id="main" role="main">
+
+  <!-- ═══ ACT 1 — HERO (On est bien ici !) ═══════════════════════ -->
+  <section class="act" id="act-1" data-carre="0" aria-label="On est bien ici !">
+    <div class="act-inner">
+      <div class="act-copy">
+        <span class="act-credit">Carré 90 — Baptiste Virot</span>
+        <h1 class="act-name">On est bien ici !</h1>
+        <p class="act-quote">Ici, nulle part ailleurs. Le bonheur n'a pas besoin de carte.</p>
+        <p class="act-meta">Collection Printemps-Été 2026. Soie 100 %, 90 × 90 cm, ourlets roulottés à la main.</p>
+        <p class="act-price">580&nbsp;€</p>
+      </div>
+    </div>
+    <div class="scroll-cue">
+      <span>Faire défiler</span>
+      <span class="line"></span>
+    </div>
+  </section>
+
+  <!-- ═══ ACT 2 — L'Esprit s'Envole ══════════════════════════════ -->
+  <section class="act" id="act-2" data-carre="1" aria-label="L'Esprit s'Envole">
+    <div class="act-inner">
+      <div class="act-copy">
+        <span class="act-credit">Carré 90 — Dimitri Rybaltchenko</span>
+        <h2 class="act-name">L'Esprit s'Envole</h2>
+        <p class="act-quote">Les caravelles toutes voiles dehors, vers le vent, ailleurs et l'aventure.</p>
+        <p class="act-meta">Hortensias, hirondelles et constellations étoilées encadrent cette fenêtre poétique. Soie 100 %, 90 × 90 cm.</p>
+        <p class="act-price">580&nbsp;€</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ACT 3 — L'Heure des Gants ══════════════════════════════ -->
+  <section class="act" id="act-3" data-carre="2" aria-label="L'Heure des Gants">
+    <div class="act-inner">
+      <div class="act-copy">
+        <span class="act-credit">Carré 90 — Jonathan Burton</span>
+        <h2 class="act-name">L'Heure des Gants</h2>
+        <p class="act-quote">Une pendule dont chaque heure est un gant. Le temps mesuré en cuir et en soie.</p>
+        <p class="act-meta">Voyage chronologique dans les archives Hermès, des années 1920 à aujourd'hui. Soie 100 %, 90 × 90 cm.</p>
+        <p class="act-price">530&nbsp;€</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ACT 4 — Paris qui Roule ═════════════════════════════════ -->
+  <section class="act" id="act-4" data-carre="3" aria-label="Paris qui Roule">
+    <div class="act-inner">
+      <div class="act-copy">
+        <span class="act-credit">Carré 70 — Hugo Grygkar, 1951</span>
+        <h2 class="act-name">Paris qui Roule</h2>
+        <p class="act-quote">Le trot des chevaux sur les pavés de la capitale. Le Paris de Napoléon III, intact.</p>
+        <p class="act-meta">Fiacres, carrosses et coupés défilent sur la soie. Soie 100 % vintage, 70 × 70 cm, roulottée à la main.</p>
+        <p class="act-price">440&nbsp;€</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ COLLECTION GRID ═════════════════════════════════════════ -->
+  <section id="collection" aria-label="Collection complète">
+    <div class="collection-inner">
+      <div class="collection-header">
+        <div class="collection-eyebrow">La collection</div>
+        <h2 class="collection-title">Quatre carrés, quatre récits</h2>
+        <p class="collection-sub">
+          Trois carrés 90 × 90 cm et un carré 70 × 70 cm, tissés et roulottés à la main dans nos ateliers de Lyon.
+        </p>
+      </div>
+
+      <div class="collection-grid" id="collection-grid">
+        <!-- Cards injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ BREADCRUMB (Overpass Mono 10px, pipe separators) ════════ -->
+  <nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <ol>
+      <li><a href="#">Femme</a></li>
+      <li><a href="#">Carrés &amp; étoles</a></li>
+      <li><a href="#">Carré 90 &amp; 70</a></li>
+      <li>Collection Printemps-Été 2026</li>
+    </ol>
+  </nav>
+
+</main>
+
+<!-- ═════════════════ PRODUCT PAGE ═════════════════════════════════ -->
+<section class="route-view" id="product-view" aria-label="Page produit">
+  <div class="route-inner">
+    <a class="route-back" href="#" data-route-back>Retour à la collection</a>
+
+    <div class="product-layout">
+      <div>
+        <div class="product-image" id="product-image"></div>
+        <div class="product-thumbs" id="product-thumbs"></div>
+      </div>
+
+      <div class="product-info">
+        <span class="product-eyebrow" id="product-eyebrow"></span>
+        <h1 class="product-title" id="product-title"></h1>
+        <p class="product-designer" id="product-designer"></p>
+        <p class="product-description" id="product-description"></p>
+
+        <div class="product-attribute">
+          <span class="label">Référence</span>
+          <span class="value" id="product-reference"></span>
+        </div>
+        <div class="product-attribute">
+          <span class="label">Dimensions</span>
+          <span class="value" id="product-dimensions"></span>
+        </div>
+        <div class="product-attribute">
+          <span class="label">Composition</span>
+          <span class="value">Twill 100 % soie, ourlets roulottés à la main</span>
+        </div>
+        <div class="product-attribute">
+          <span class="label">Origine</span>
+          <span class="value">Fabriqué en France</span>
+        </div>
+
+        <p class="product-price-large" id="product-price"></p>
+
+        <div class="product-cta-row">
+          <div class="qty-selector" role="group" aria-label="Quantité">
+            <button type="button" class="qty-dec" aria-label="Diminuer">−</button>
+            <input type="number" class="qty-value" id="product-qty" value="1" min="1" max="9" aria-label="Quantité"/>
+            <button type="button" class="qty-inc" aria-label="Augmenter">+</button>
+          </div>
+          <div class="split-btn">
+            <button class="btn btn--add" type="button" id="product-add">Ajouter au panier</button>
+          </div>
+        </div>
+
+        <button class="product-find-store">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s-7-7-7-12a7 7 0 1 1 14 0c0 5-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          Trouver en boutique
+        </button>
+      </div>
+    </div>
+
+    <div class="product-other-carres">
+      <h2 class="product-other-title">Découvrir les autres carrés</h2>
+      <div class="product-other-grid" id="product-other-grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ PROTO PERSONA ════════════════════════════════ -->
+<section class="route-view" id="proto-persona-view" aria-label="Proto persona">
+  <div class="route-inner">
+    <a class="route-back" href="#" data-route-back>Retour à l'expérience</a>
+
+    <div class="deliv-header">
+      <div>
+        <div class="deliv-eyebrow">Livrable 1 — Proto persona</div>
+        <h1 class="deliv-title">Inès Berthier, 38 ans</h1>
+      </div>
+      <div class="deliv-meta">M2UX 2026<br/>Hermès — Carrés de Soie</div>
+    </div>
+
+    <div class="persona-grid">
+      <div class="persona-card">
+        <div class="persona-avatar"></div>
+        <div class="persona-name">Inès Berthier</div>
+        <div class="persona-stats">
+          <span>38 ans</span>
+          <span>Directrice marketing — maison de couture</span>
+          <span>Paris 7e — voyage 2 fois/mois</span>
+          <span>Cliente Hermès depuis 12 ans</span>
+        </div>
+        <p class="persona-quote">« Quand j'achète un carré, j'achète un peu d'art. Je veux que le site me le rappelle. »</p>
+      </div>
+
+      <div>
+        <div class="persona-cols">
+          <div class="col">
+            <div class="deliv-section-title">Pains</div>
+            <ul class="deliv-list">
+              <li class="deliv-list-item">Le site donne l'impression d'un catalogue, pas d'une maison</li>
+              <li class="deliv-list-item">Difficile de visualiser le tomber, la matière, sans la voir en boutique</li>
+              <li class="deliv-list-item">L'imprimé devient anonyme dans la grille de 100+ produits</li>
+              <li class="deliv-list-item">Pas de contexte sur l'artiste, pas d'histoire du dessin</li>
+              <li class="deliv-list-item">Prix élevé sans justification émotionnelle visible en ligne</li>
+            </ul>
+          </div>
+          <div class="col">
+            <div class="deliv-section-title">Gains</div>
+            <ul class="deliv-list">
+              <li class="deliv-list-item">Découvrir l'origine artistique de chaque pièce</li>
+              <li class="deliv-list-item">Sentir la qualité Hermès même en ligne</li>
+              <li class="deliv-list-item">Trouver une pièce qui a du sens, pas juste qui fait joli</li>
+              <li class="deliv-list-item">Vivre une expérience digitale à la hauteur de la marque</li>
+              <li class="deliv-list-item">Pouvoir reprendre son achat plus tard sans tout reperdre</li>
+            </ul>
+          </div>
+          <div class="col">
+            <div class="deliv-section-title">Contexte d'usage</div>
+            <ul class="deliv-list">
+              <li class="deliv-list-item">Soirée à la maison, après dîner — Mac, tasse de thé</li>
+              <li class="deliv-list-item">Pause déjeuner au bureau — iPhone, lecture rapide</li>
+              <li class="deliv-list-item">Hôtel à l'étranger en voyage — iPad, temps long</li>
+            </ul>
+          </div>
+          <div class="col">
+            <div class="deliv-section-title">Devices</div>
+            <ul class="deliv-list">
+              <li class="deliv-list-item">MacBook Pro 14" (principal, 70 % du temps)</li>
+              <li class="deliv-list-item">iPhone 15 Pro (mobilité)</li>
+              <li class="deliv-list-item">iPad Air (voyages, lecture longue)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="persona-empathy">
+          <div class="deliv-section-title">Empathy map</div>
+          <div class="persona-empathy-grid">
+            <div class="persona-empathy-cell">
+              <h4>Voit</h4>
+              <ul>
+                <li>· Photos lifestyle Vogue, AD Magazine</li>
+                <li>· Stories Instagram d'amies en tenue de luxe</li>
+                <li>· Vitrines Faubourg Saint-Honoré</li>
+              </ul>
+            </div>
+            <div class="persona-empathy-cell">
+              <h4>Entend</h4>
+              <ul>
+                <li>· Discussions entre amies sur « ce qu'on n'achète plus »</li>
+                <li>· Critique générale du e-commerce qui « tue le luxe »</li>
+                <li>· Compliments sur ses choix vestimentaires</li>
+              </ul>
+            </div>
+            <div class="persona-empathy-cell">
+              <h4>Dit</h4>
+              <ul>
+                <li>· « Je préfère investir dans une pièce qui dure »</li>
+                <li>· « Le digital ne remplace jamais l'émotion d'une vraie boutique »</li>
+                <li>· « Hermès c'est plus qu'une marque, c'est un savoir-faire »</li>
+              </ul>
+            </div>
+            <div class="persona-empathy-cell">
+              <h4>Fait</h4>
+              <ul>
+                <li>· Visite Hermès Faubourg 3 à 4 fois par an</li>
+                <li>· Achète en boutique principalement</li>
+                <li>· N'achète jamais en ligne sans avoir vu en boutique avant</li>
+                <li>· Suit @hermes sur Instagram religieusement</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ EXPERIENCE MAP ═══════════════════════════════ -->
+<section class="route-view" id="experience-map-view" aria-label="Experience map">
+  <div class="route-inner">
+    <a class="route-back" href="#" data-route-back>Retour à l'expérience</a>
+
+    <div class="deliv-header">
+      <div>
+        <div class="deliv-eyebrow">Livrable 1 — Experience map</div>
+        <h1 class="deliv-title">L'achat actuel d'un carré sur hermes.com</h1>
+      </div>
+      <div class="deliv-meta">M2UX 2026<br/>Avant refonte</div>
+    </div>
+
+    <p style="font-family:var(--font-edito);font-style:italic;font-size:18px;line-height:1.6;color:var(--color-near-black);max-width:760px;margin-bottom:var(--sp-6);">
+      Cartographie des six étapes que traverse Inès lorsqu'elle souhaite découvrir, considérer puis acheter un carré sur la version actuelle du site. La sensation transversale est celle d'un catalogue produit efficace mais émotionnellement plat : le site fonctionne, mais ne raconte rien que la boutique du Faubourg ne raconterait mieux.
+    </p>
+
+    <div class="expmap-stages">
+      <div class="expmap-grid">
+        <div class="expmap-cell expmap-cell--header">Étape</div>
+        <div class="expmap-cell expmap-cell--header">Découverte</div>
+        <div class="expmap-cell expmap-cell--header">Navigation</div>
+        <div class="expmap-cell expmap-cell--header">Exploration</div>
+        <div class="expmap-cell expmap-cell--header">Considération</div>
+        <div class="expmap-cell expmap-cell--header">Décision</div>
+        <div class="expmap-cell expmap-cell--header">Achat</div>
+
+        <div class="expmap-cell expmap-cell--label">Touchpoint</div>
+        <div class="expmap-cell">Newsletter Hermès / Search Google</div>
+        <div class="expmap-cell">Catégorie « Carrés et accessoires de soie »</div>
+        <div class="expmap-cell">Grille de 106 carrés 90×90</div>
+        <div class="expmap-cell">Page produit individuelle</div>
+        <div class="expmap-cell">Bouton « Ajouter au panier »</div>
+        <div class="expmap-cell">Tunnel de paiement</div>
+
+        <div class="expmap-cell expmap-cell--label">Action</div>
+        <div class="expmap-cell">Clique sur le lien email/ad</div>
+        <div class="expmap-cell">Filtre par couleur, format</div>
+        <div class="expmap-cell">Survole les vignettes</div>
+        <div class="expmap-cell">Examine 6 photos statiques</div>
+        <div class="expmap-cell">Hésite, ferme l'onglet « pour y réfléchir »</div>
+        <div class="expmap-cell">Saisit adresse, paiement, confirme</div>
+
+        <div class="expmap-cell expmap-cell--label">Émotion</div>
+        <div class="expmap-cell"><div class="expmap-emotion">+1<div class="expmap-bar"><div class="expmap-bar-fill" style="left:50%;width:25%;"></div></div></div></div>
+        <div class="expmap-cell"><div class="expmap-emotion">+1<div class="expmap-bar"><div class="expmap-bar-fill" style="left:50%;width:25%;"></div></div></div></div>
+        <div class="expmap-cell"><div class="expmap-emotion">&nbsp;0<div class="expmap-bar"><div class="expmap-bar-fill" style="left:50%;width:0;"></div></div></div></div>
+        <div class="expmap-cell"><div class="expmap-emotion">&nbsp;0<div class="expmap-bar"><div class="expmap-bar-fill" style="left:50%;width:0;"></div></div></div></div>
+        <div class="expmap-cell"><div class="expmap-emotion">−1<div class="expmap-bar"><div class="expmap-bar-fill" style="left:25%;width:25%;"></div></div></div></div>
+        <div class="expmap-cell"><div class="expmap-emotion">&nbsp;0<div class="expmap-bar"><div class="expmap-bar-fill" style="left:50%;width:0;"></div></div></div></div>
+
+        <div class="expmap-cell expmap-cell--label">Pain points</div>
+        <div class="expmap-cell">L'email/ad ne capture pas l'univers Hermès, comme n'importe quelle marque</div>
+        <div class="expmap-cell">Vue catalogue uniforme et générique, peu différenciante du reste du e-commerce</div>
+        <div class="expmap-cell">100 produits indistincts, fatigue de choix immédiate</div>
+        <div class="expmap-cell">Photos belles mais statiques, aucune sensation tactile, pas d'histoire</div>
+        <div class="expmap-cell">Rien ne convertit l'émotion en action ; pas de raison de revenir</div>
+        <div class="expmap-cell">Checkout impersonnel, en désaccord total avec le packaging physique</div>
+
+        <div class="expmap-cell expmap-cell--label">Opportunités</div>
+        <div class="expmap-cell">Storytelling visuel dès le premier point de contact</div>
+        <div class="expmap-cell">Curation éditoriale par collection saisonnière, narrative</div>
+        <div class="expmap-cell">Expérience scrollytelling immersive plutôt qu'une grille</div>
+        <div class="expmap-cell">Interaction WebGL — silk hover, choreography scroll-coupled, weave shader</div>
+        <div class="expmap-cell">Persistance d'état (panier survit refresh), reprise facile</div>
+        <div class="expmap-cell">Confirmation à la hauteur du produit — packaging digital</div>
+      </div>
+    </div>
+
+    <div style="margin-top:var(--sp-6);padding:var(--sp-4);background:var(--color-cream-medium);border-left:2px solid var(--color-black);">
+      <div class="deliv-section-title" style="border-bottom:none;margin-bottom:var(--sp-2);">Insight clé</div>
+      <p style="font-family:var(--font-edito);font-style:italic;font-size:18px;line-height:1.5;">
+        Le moment de bascule est l'étape « Considération » : c'est là que l'émotion s'effondre de +1 à 0, parce que la page produit ne fait que présenter de l'information — alors qu'Inès vient chercher de l'émotion. Le pivot du redesign doit donc se faire à cet endroit précis : transformer la page produit en moment d'expérience.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ USER FLOW ════════════════════════════════════ -->
+<section class="route-view" id="user-flow-view" aria-label="User flow">
+  <div class="route-inner">
+    <a class="route-back" href="#" data-route-back>Retour à l'expérience</a>
+
+    <div class="deliv-header">
+      <div>
+        <div class="deliv-eyebrow">Livrable 2 — Parcours utilisateur cible</div>
+        <h1 class="deliv-title">Carrés de Soie : la maison s'invite à l'écran</h1>
+      </div>
+      <div class="deliv-meta">M2UX 2026<br/>Parcours cible</div>
+    </div>
+
+    <p style="font-family:var(--font-edito);font-style:italic;font-size:18px;line-height:1.6;color:var(--color-near-black);max-width:780px;margin-bottom:var(--sp-6);">
+      Le parcours cible repositionne la page produit comme la pièce maîtresse de l'expérience, en remplaçant la grille catalogue par un récit scroll-couplé qui présente quatre carrés comme une mini-collection. Chaque transition mobilise une micro-interaction technique impossible à reproduire dans Figma classique.
+    </p>
+
+    <div class="flow-step">
+      <div class="flow-step-num">01</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop / Mobile</span><span>Arrivée</span></div>
+        <h3 class="flow-step-name">Arrivée sur la page</h3>
+        <p class="flow-step-action">L'utilisatrice arrive depuis une newsletter ou un lien partagé. Le premier carré (« On est bien ici ! ») apparaît centré sur fond crème, pendant qu'un loader Hermès SVG décroît.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — Loader Hermès</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> Page <code>load</code> complete (textures Cloudinary réceptionnées)</div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> Barre de progression horizontale 0 → 140px en 0.9s ease <code>power2.inOut</code>, puis fade-out du loader 0.8s. Logo header en entrée subtile (translate Y −8px → 0, fade 0 → 1, 1.0s).</div>
+        </div>
+        <p class="flow-benefit"> Premier moment Hermès assumé, pas un site e-commerce.</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">02</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop</span><span>Hover sur le carré</span></div>
+        <h3 class="flow-step-name">Le silk react sous le curseur</h3>
+        <p class="flow-step-action">Inès passe la souris sur le carré. Un halo lumineux multi-couches suit le curseur, et la surface géométrique du tissu se déforme légèrement autour de la souris — comme une vraie soie qu'on toucherait.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — Cursor sheen + silk displacement</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> <code>pointermove</code> sur le canvas WebGL</div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> Vertex shader applique du noise simplex 2D localisé dans un radius UV de 0.45, eased par <code>uMouseStrength</code> (ramp 0 → 1 en 0.6s à l'entrée, 1 → 0 en 1.2s à la sortie). Fragment shader superpose un halo crème (rayon 0.42 UV, falloff <code>pow(smoothstep, 1.4)</code>) + un cœur gold-cream (rayon 0.16 UV, falloff <code>pow(smoothstep, 1.6)</code>).</div>
+        </div>
+        <p class="flow-benefit"> Sensation tactile inédite, le carré semble vivant — moment signature impossible en classique Figma.</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">03</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop / Mobile</span><span>Scroll vers carré 2</span></div>
+        <h3 class="flow-step-name">Tissage en temps réel du carré suivant</h3>
+        <p class="flow-step-action">L'utilisatrice scroll vers le bas. Le carré dérive en arc à travers la page, billow en 3D comme une voile dans le vent, puis le carré suivant se tisse littéralement à sa place — un front horizontal sweep top-down avec des fils warp/weft visibles dans la zone de transition.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — Weave shader + arc choreography</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> Position de scroll (ScrollTrigger scrub: 2.4)</div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> Mesh position en lerp <code>easeInOutQuart</code> + arc <code>windLift</code> (rise fast, settle slow) ; rotation lagged en <code>pow(t, 1.4)</code> ; <code>uMotionStrength</code> drive un billow géométrique <code>sin(uv.x·π)·sin(uv.y·π)·0.55</code> qui catche l'air comme une voile. Fragment shader sweep <code>front = uMix * (1 + 2·band) − band</code> avec fils warp 340 cycles + weft 320 cycles dans une enveloppe <code>smoothstep(band·1.5, 0, |dist|)</code>, plus shimmer leading-edge <code>0.018 UV</code>.</div>
+        </div>
+        <p class="flow-benefit"> Découverte progressive narrative, jamais de bouton « next » plat.</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">04</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop / Mobile</span><span>Scroll-stop entre 2 carrés</span></div>
+        <h3 class="flow-step-name">Magnet vers le carré le plus proche</h3>
+        <p class="flow-step-action">Si Inès s'arrête entre deux carrés, l'expérience l'aimante doucement vers le plus proche — sans jamais combattre un scroll actif.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — ScrollTrigger snap delayed</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> Scroll inactif depuis 180 ms (delay GSAP)</div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> GSAP tween de <code>window.scrollY</code> vers le snap point le plus proche parmi <code>[0, 1/3, 2/3, 1]</code> de la séquence d'actes ; durée min 0.4s max 0.9s, ease <code>power2.inOut</code>, <code>inertia: false</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">05</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop / Mobile</span><span>Dissolve vers la grille</span></div>
+        <h3 class="flow-step-name">Le dernier carré se défait dans la page</h3>
+        <p class="flow-step-action">Lorsque la grille collection approche, le carré actif (Paris qui Roule) se détisse littéralement par le bas — symétrique au tissage, vocabulaire visuel cohérent.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — Unweave shader</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> ScrollTrigger sur <code>#collection</code> approchant <code>top center</code></div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> <code>uTexB</code> remplacé par une <code>creamTexture</code> (1×1 #FFFCF7), <code>uWeaveDirection = −1</code> bascule le sens du sweep en bottom-up, <code>uMix</code> progresse 0 → 1 sur le scroll. Les fils warp/weft restent visibles à l'avant pendant que le carré disparaît dans la couleur de la page.</div>
+        </div>
+        <p class="flow-benefit"> Symétrie tisser/détisser — métaphore complète, le carré naît et retourne au métier.</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">06</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop / Mobile</span><span>Ajout au panier depuis grille</span></div>
+        <h3 class="flow-step-name">Conversion silencieuse</h3>
+        <p class="flow-step-action">La grille présente les 4 carrés avec sélecteur de quantité et bouton « Ajouter ». Au clic, confirmation visuelle non-intrusive.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — Add confirm + cart icon pulse</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> <code>click</code> sur bouton « Ajouter »</div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> Bouton swap texte → « Ajouté ✓ » en cream-light pendant 1.6s. Simultanément, GSAP yoyo sur l'icône cart header : <code>scale: 1 → 1.15 → 1</code> en 0.18s × 2. Compteur cart-count incrémenté avec <code>aria-live="polite"</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">07</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop / Mobile</span><span>Page produit dédiée</span></div>
+        <h3 class="flow-step-name">Click sur une carte → page produit</h3>
+        <p class="flow-step-action">Pour examen détaillé, click sur la carte ouvre une page produit dédiée via routing hash-based, avec photo plein cadre, designer, dimensions, composition, et accès rapide aux autres carrés de la collection.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — Hash routing + view swap</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> <code>click</code> sur <code>.product-card</code> → <code>window.location.hash = "#product/c01"</code></div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> <code>hashchange</code> handler hide <code>.main-element</code>, show <code>.route-view#product-view</code> populée avec les data du carré. WebGL canvas opacity 0, sticky-cta hidden. Body class <code>has-route-view</code> pour cascade des règles.</div>
+        </div>
+        <p class="flow-benefit"> Inès peut prendre son temps sur un carré sans perdre le contexte de collection.</p>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">08</div>
+      <div class="flow-step-content">
+        <div class="flow-step-meta"><span class="device-badge">Desktop / Mobile</span><span>Persistance</span></div>
+        <h3 class="flow-step-name">Le panier survit à un refresh</h3>
+        <p class="flow-step-action">Inès ferme l'onglet pour répondre à un email. Quand elle revient, le carré est encore dans son panier — le compteur header est déjà à jour, le drawer pre-rempli.</p>
+        <div class="flow-microint">
+          <div class="flow-microint-label">Micro-interaction — localStorage hydration</div>
+          <div class="flow-microint-row"><strong>Trigger :</strong> Page <code>load</code></div>
+          <div class="flow-microint-row"><strong>Feedback :</strong> <code>readCart()</code> parse <code>hermes_carre_cart_v1</code> → schéma <code>{ items: [{ id, name, price, qty }] }</code>. <code>refreshCartUI()</code> met le compteur à jour et pre-popule le drawer avec les thumbnails Cloudinary correspondantes.</div>
+        </div>
+        <p class="flow-benefit"> Pas de panique de perte, reprend l'achat où elle s'est arrêtée.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ STICKY BOTTOM BAR ════════════════════════════ -->
+<div class="sticky-cta" id="sticky-cta" aria-label="Achat rapide">
+  <div class="sticky-cta-left">
+    <div class="sticky-thumb" id="sticky-thumb"></div>
+    <div class="sticky-info">
+      <span class="name" id="sticky-name">Brides de Gala</span>
+      <span class="price" id="sticky-price">415 €</span>
+    </div>
+  </div>
+  <div class="sticky-cta-right">
+    <div class="split-btn">
+      <button class="btn btn--add" id="sticky-add">Ajouter au panier</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════ CART DRAWER ══════════════════════════════════ -->
+<div class="cart-overlay" id="cart-overlay" aria-hidden="true"></div>
+<aside class="cart-drawer" id="cart-drawer" aria-label="Panier" aria-hidden="true">
+  <div class="cart-header">
+    <h2>Mon panier (<span id="cart-drawer-count">0</span>)</h2>
+    <button class="cart-close" id="cart-close" aria-label="Fermer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/>
+      </svg>
+    </button>
+  </div>
+  <div class="cart-items" id="cart-items"></div>
+  <div class="cart-footer" id="cart-footer-wrap"></div>
+</aside>
+
+<!-- ═════════════════ FOOTER ═══════════════════════════════════════ -->
+<footer class="page-footer" role="contentinfo">
+  <div class="main-footer">
+    <div class="footer-col">
+      <h3 class="heading-4">Services</h3>
+      <ul>
+        <li><a href="#">Nous contacter</a></li>
+        <li><a href="#">Magasins Hermès</a></li>
+        <li><a href="#">Service Soie</a></li>
+        <li><a href="#">Conseils d'entretien</a></li>
+        <li><a href="#">L'art de nouer</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3 class="heading-4">Commandes</h3>
+      <ul>
+        <li><a href="#">Suivre ma commande</a></li>
+        <li><a href="#">Livraison &amp; retours</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3 class="heading-4">La maison Hermès</h3>
+      <ul>
+        <li><a href="#">Histoire de la maison</a></li>
+        <li><a href="#">Le tissage de la soie</a></li>
+        <li><a href="#">Hermès &amp; le développement durable</a></li>
+        <li><a href="#">Carrières</a></li>
+        <li><a href="#">Investisseurs</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3 class="heading-4">Mentions légales</h3>
+      <ul>
+        <li><a href="#">Conditions générales de vente</a></li>
+        <li><a href="#">Confidentialité &amp; cookies</a></li>
+        <li><a href="#">Mentions légales</a></li>
+        <li><a href="#">Plan du site</a></li>
+        <li><a href="#">Préférences cookies</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© Hermès — Tous droits réservés</span>
+    <span style="display:flex;gap:var(--sp-4);">
+      <a href="#proto-persona" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px;">Proto persona</a>
+      <a href="#experience-map" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px;">Experience map</a>
+      <a href="#user-flow" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px;">User flow</a>
+    </span>
+    <span>France (€)</span>
+  </div>
+</footer>
+
+<!-- ═════════════════════════════════════════════════════════════════
+   ╔══════════════════════════════════════════════════════════════════╗
+   ║                                                                  ║
+   ║   THIS PROTOTYPE DEMONSTRATES THREE THINGS                       ║
+   ║   THAT FIGMA'S CLASSIC PROTOTYPING TOOL CANNOT DO:               ║
+   ║                                                                  ║
+   ║   1. CUSTOM WEBGL SHADER INTERACTION                             ║
+   ║      A vertex shader displaces the silk plane along its normal   ║
+   ║      using a 2D simplex-noise field anchored to the cursor's     ║
+   ║      UV position with smooth falloff. Figma cannot run GLSL.     ║
+   ║                                                                  ║
+   ║   2. SCROLL-COUPLED 3D CHOREOGRAPHY                              ║
+   ║      A GSAP master timeline binds scroll progress directly to    ║
+   ║      Three.js camera transforms, mesh transforms and texture     ║
+   ║      cross-fade uniforms. Figma's scroll prototyping is purely   ║
+   ║      vertical translation of static frames.                      ║
+   ║                                                                  ║
+   ║   3. PERSISTENT STATE                                            ║
+   ║      Cart contents survive a full page refresh via localStorage  ║
+   ║      under the schema {items:[{id,name,price,qty}]}.             ║
+   ║      Figma prototypes lose all state on close.                   ║
+   ║                                                                  ║
+   ╚══════════════════════════════════════════════════════════════════╝
+   ═════════════════════════════════════════════════════════════════ -->
+
+<script>
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  CARRÉ DATA — single source of truth                             ║
+   ║  Each carré has a Hermès-coherent solid background colour and    ║
+   ║  an accent that prints both the procedural pattern and the       ║
+   ║  EBGaramond italic monogram.                                     ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const CARRES = [
+  {
+    id:      'c01',
+    name:    'On est bien ici !',
+    format:  'Carré 90',
+    price:   580,
+    designer:'Baptiste Virot',
+    quote:   'Ici, nulle part ailleurs. Le bonheur n\'a pas besoin de carte.',
+    meta:    'Collection Printemps-Été 2026. Soie 100 %, 90 × 90 cm, ourlets roulottés à la main.',
+    imgUrl:  'https://res.cloudinary.com/dh6a0kqtg/image/upload/v1777316649/on-est-bien-ici_ieguxx.jpg'
+  },
+  {
+    id:      'c02',
+    name:    'L\'Esprit s\'Envole',
+    format:  'Carré 90',
+    price:   580,
+    designer:'Dimitri Rybaltchenko',
+    quote:   'Les caravelles toutes voiles dehors, vers le vent, ailleurs et l\'aventure.',
+    meta:    'Hortensias, hirondelles et constellations encadrent cette fenêtre poétique. Soie 100 %, 90 × 90 cm.',
+    imgUrl:  'https://res.cloudinary.com/dh6a0kqtg/image/upload/v1777316649/lesprit-senvole_au97sc.jpg'
+  },
+  {
+    id:      'c03',
+    name:    'L\'Heure des Gants',
+    format:  'Carré 90',
+    price:   530,
+    designer:'Jonathan Burton',
+    quote:   'Une pendule dont chaque heure est un gant. Le temps mesuré en cuir et en soie.',
+    meta:    'Voyage chronologique dans les archives Hermès, des années 1920 à aujourd\'hui. Soie 100 %, 90 × 90 cm.',
+    imgUrl:  'https://res.cloudinary.com/dh6a0kqtg/image/upload/v1777316649/lheure-des-gants_uyj3pn.jpg'
+  },
+  {
+    id:      'c04',
+    name:    'Paris qui Roule',
+    format:  'Carré 70',
+    price:   440,
+    designer:'Hugo Grygkar, 1951',
+    quote:   'Le trot des chevaux sur les pavés de la capitale. Le Paris de Napoléon III, intact.',
+    meta:    'Fiacres, carrosses et coupés défilent sur la soie. Soie 100 % vintage, 70 × 70 cm, roulottée à la main.',
+    imgUrl:  'https://res.cloudinary.com/dh6a0kqtg/image/upload/v1777316649/paris-qui-roule_jbhbib.jpg'
+  }
+];
+
+/* ────────────────────────────────────────────────────────────────────
+   Reduced-motion gate: drives both shader displacement and scroll FX
+   ──────────────────────────────────────────────────────────────────── */
+const PREFERS_REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ─────────────────────────────────────────────────────────────────── */
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  TEXTURE LOADING                                                 ║
+   ║                                                                  ║
+   ║  Real product photographs are loaded via THREE.TextureLoader     ║
+   ║  from the Cloudinary CDN URLs defined in CARRES[].imgUrl.        ║
+   ║                                                                  ║
+   ║  >>> SWAP IMAGES <<<                                             ║
+   ║  To use different images, update CARRES[].imgUrl above.          ║
+   ║  The rest of the pipeline requires no change.                    ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+
+const loader  = new THREE.TextureLoader();
+loader.crossOrigin = 'anonymous';
+
+/* Minimal canvas fallback (shown while the real image loads or on error) */
+function makeFallbackCanvas(carre, size = 512) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#FFFCF7';
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2;
+  ctx.strokeRect(32, 32, size - 64, size - 64);
+  ctx.fillStyle = '#1a1a1a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'italic 500 60px "EB Garamond", serif';
+  ctx.fillText('H', size / 2, size / 2 - 12);
+  ctx.font = '400 14px "Overpass Mono", monospace';
+  ctx.fillStyle = '#696969';
+  ctx.fillText(carre.name.toUpperCase(), size / 2, size / 2 + 44);
+  return c;
+}
+
+/* Load all textures. Each slot immediately has a fallback texture
+   so Three.js never sits with an undefined uniform.                  */
+const textures = CARRES.map(carre => {
+  const fallbackCanvas = makeFallbackCanvas(carre);
+  const tex = new THREE.CanvasTexture(fallbackCanvas);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.anisotropy = 4;
+
+  // Load the real image and replace the texture data
+  loader.load(
+    carre.imgUrl,
+    (loadedTex) => {
+      tex.image  = loadedTex.image;
+      tex.needsUpdate = true;
+    },
+    undefined,
+    (err) => { console.warn(`Texture load failed for ${carre.name}:`, err); }
+  );
+
+  return tex;
+});
+
+/* HTML thumbnail factory — uses the Cloudinary URL directly          */
+function makeThumbImg(idx) {
+  const img = document.createElement('img');
+  img.src     = CARRES[idx].imgUrl;
+  img.alt     = CARRES[idx].name;
+  img.loading = 'lazy';
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+  return img;
+}
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  CREAM TEXTURE — used as uTexB during the final unweave          ║
+   ║                                                                  ║
+   ║  Matches the page background (#FFFCF7). When the dissolve sweeps ║
+   ║  bottom-up with this texture as the "destination", the carré     ║
+   ║  visually unweaves into the page surface — threads pulling apart ║
+   ║  as the front advances, leaving page-color behind.               ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const creamTexture = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 4;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#FFFCF7';     // matches --color-cream-light exactly
+  ctx.fillRect(0, 0, 4, 4);
+  const tex = new THREE.CanvasTexture(c);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
+})();
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  THREE.JS — silk stage                                           ║
+   ║  Perspective camera, subdivided plane, custom ShaderMaterial.    ║
+   ║  Background colour matches the page surface so the plane sits    ║
+   ║  on the page, not on a black canvas.                             ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const stage = document.getElementById('webgl-canvas');
+
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color(0xFFFCF7);   // --color-cream-light
+
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+stage.appendChild(renderer.domElement);
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  SILK SHADER — the signature interaction                         ║
+   ║                                                                  ║
+   ║  Vertex pass:                                                    ║
+   ║    – 2D simplex noise field anchored to cursor UV position       ║
+   ║    – Smooth falloff radius around cursor                         ║
+   ║    – Ambient breathing noise at 0.04 amplitude (always on)       ║
+   ║    – Mouse displacement amplitude eased in/out via uMouseStrength║
+   ║                                                                  ║
+   ║  Fragment pass:                                                  ║
+   ║    – Mixes uTexA → uTexB by uMix (driven by scroll)              ║
+   ║    – Adds tiny luminance from displacement (silk highlight feel) ║
+   ║    – uOpacity for the final fade-out before the grid appears     ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const silkVertex = /* glsl */ `
+  uniform float uTime;
+  uniform vec2  uMouse;            // in UV space (0..1)
+  uniform float uMouseStrength;    // eased 0..1
+  uniform float uReducedMotion;    // 1.0 disables displacement
+  uniform float uMotionStrength;   // 0..1 — peaks during scroll transitions
+  uniform vec2  uMotionDir;        // unit vector — direction of carré motion in UV space
+
+  varying vec2  vUv;
+  varying float vDisplacement;
+  varying float vMouseFalloff;
+
+  // ─── Ashima/Stefan Gustavson 2D simplex noise ───────────────────
+  vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+  vec2 mod289(vec2 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
+  vec3 permute(vec3 x){ return mod289(((x*34.0)+1.0)*x); }
+
+  float snoise(vec2 v){
+    const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                       -0.577350269189626, 0.024390243902439);
+    vec2 i  = floor(v + dot(v, C.yy));
+    vec2 x0 = v - i + dot(i, C.xx);
+    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec4 x12 = x0.xyxy + C.xxzz; x12.xy -= i1;
+    i = mod289(i);
+    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+    m = m*m; m = m*m;
+    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+    vec3 h = abs(x) - 0.5;
+    vec3 ox = floor(x + 0.5);
+    vec3 a0 = x - ox;
+    m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+    vec3 g;
+    g.x  = a0.x  * x0.x  + h.x  * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
+  }
+
+  void main() {
+    vUv = uv;
+    vec3 pos = position;
+    vec2 centered = uv - 0.5;
+
+    /* ╔══════════════════════════════════════════════════════════╗
+       ║  3D SHAPE — silk has natural body, never feels flat      ║
+       ║                                                          ║
+       ║  Two contributions:                                      ║
+       ║   1. Baseline bell — always on, the silk is              ║
+       ║      perpetually a slightly-curved surface, not a poster.║
+       ║   2. Motion billow — peaks during scroll transitions,    ║
+       ║      gives the sail-catches-wind look. Asymmetric along  ║
+       ║      the motion direction so it looks dragged.           ║
+       ╚══════════════════════════════════════════════════════════╝ */
+    float bell = sin(uv.x * 3.14159) * sin(uv.y * 3.14159);  // peaks at center, 0 at edges
+    pos.z += bell * 0.06;                                     // baseline 3D presence
+
+    // Motion billow — bell shape amplified during transitions
+    pos.z += bell * uMotionStrength * 0.55;
+
+    // Drag tilt — leading edge pushed forward, trailing edge back
+    // (subtle asymmetry along the direction of motion)
+    float along = dot(centered, uMotionDir);
+    pos.z += along * uMotionStrength * 0.35;
+
+    // ── Animation 1 — ambient breathing (always on) ─────────────
+    float ambient = snoise(uv * 2.5 + uTime * 0.20) * 0.022
+                  + snoise(uv * 6.0 - uTime * 0.12) * 0.012;
+
+    // ── Animation 2 — cursor halo (same character, localised) ───
+    float d       = distance(uv, uMouse);
+    float falloff = smoothstep(0.45, 0.0, d);
+    float cursor  = snoise(uv * 3.5 + uTime * 0.30) * 0.030
+                  + snoise(uv * 8.0 - uTime * 0.24) * 0.016;
+
+    float disp = ambient + cursor * falloff * uMouseStrength;
+    disp *= (1.0 - uReducedMotion);
+
+    pos.z += disp;
+
+    vDisplacement = disp;
+    vMouseFalloff = falloff * uMouseStrength * (1.0 - uReducedMotion);
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  }
+`;
+
+const silkFragment = /* glsl */ `
+  uniform sampler2D uTexA;
+  uniform sampler2D uTexB;
+  uniform float     uMix;            // 0..1 — drives the weave front position
+  uniform float     uOpacity;        // global mesh fade (final dissolve)
+  uniform vec2      uMouse;          // cursor in UV space
+  uniform float     uMouseStrength;  // eased 0..1
+  uniform float     uWeaveDirection; // +1 = top-down weave, -1 = bottom-up unweave
+
+  varying vec2  vUv;
+  varying float vDisplacement;
+  varying float vMouseFalloff;
+
+  /* ╔══════════════════════════════════════════════════════════════╗
+     ║  WEAVE TRANSITION (bidirectional)                            ║
+     ║                                                              ║
+     ║  Same shader handles both:                                   ║
+     ║   - Weave-IN  (uWeaveDirection = +1.0): top → bottom sweep   ║
+     ║                used for carré-to-carré transitions.          ║
+     ║   - Unweave   (uWeaveDirection = -1.0): bottom → top sweep   ║
+     ║                used by the final dissolve. uTexB is set to   ║
+     ║                a cream texture matching the page bg, so the  ║
+     ║                carré literally unweaves into nothing.        ║
+     ║                                                              ║
+     ║  At the front itself: visible warp + weft thread structure   ║
+     ║  plus a leading-edge shimmer — the shuttle being thrown.     ║
+     ╚══════════════════════════════════════════════════════════════╝ */
+  void main() {
+    // Weft coordinate flips with weave direction
+    // direction = +1 → weft = 1 - vUv.y (0 at top, sweep top→bottom)
+    // direction = -1 → weft = vUv.y     (0 at bottom, sweep bottom→top)
+    float weft = mix(vUv.y, 1.0 - vUv.y, step(0.0, uWeaveDirection));
+
+    float bandWidth = 0.09;
+    float front = uMix * (1.0 + 2.0 * bandWidth) - bandWidth;
+    float dist  = front - weft;
+
+    float reveal = smoothstep(-bandWidth, bandWidth, dist);
+
+    vec4 a = texture2D(uTexA, vUv);
+    vec4 b = texture2D(uTexB, vUv);
+    vec3 col = mix(a.rgb, b.rgb, reveal);
+
+    // ── Visible weave threads in the band ────────────────────────
+    float warpFreq = 340.0;
+    float weftFreq = 320.0;
+    float warp = abs(sin(vUv.x * warpFreq));
+    // weft lines aligned to the actual sweep direction
+    float weftLine = abs(sin(weft * weftFreq));
+    warp     = smoothstep(0.82, 0.99, warp);
+    weftLine = smoothstep(0.82, 0.99, weftLine);
+
+    float frontEnvelope = smoothstep(bandWidth * 1.5, 0.0, abs(dist));
+    vec3 threadColor = vec3(0.99, 0.95, 0.88);
+    float threadAmount = (warp * 0.55 + weftLine * 0.45) * frontEnvelope * 0.6;
+    col = mix(col, threadColor, threadAmount);
+
+    // ── Leading-edge shimmer (the shuttle) ──────────────────────
+    float lead = smoothstep(0.018, 0.0, abs(dist));
+    col += vec3(0.06, 0.05, 0.04) * lead;
+
+    /* ┌─────────────────────────────────────────────────────────┐
+       │  CURSOR SHEEN — multi-layer luxurious silk highlight    │
+       │                                                         │
+       │  Real silk catches light at multiple scales:            │
+       │   - A wide atmospheric glow (5x larger than the core)   │
+       │   - A tighter inner highlight (the focal point)         │
+       │   - A faint warm gold-cream tint for late-afternoon     │
+       │     light feel — never bright white (looks cheap)       │
+       │                                                         │
+       │  The two layers blend additively with different power   │
+       │  curves so the falloff feels organic, not stamped.      │
+       └─────────────────────────────────────────────────────────┘ */
+    float cursorDist = distance(vUv, uMouse);
+    float strength   = uMouseStrength;
+
+    // Outer atmospheric glow — wide, soft, warm
+    float outerGlow = smoothstep(0.42, 0.04, cursorDist);
+    outerGlow = pow(outerGlow, 1.4);
+
+    // Inner highlight — tight, brighter, slightly cooler
+    float innerCore = smoothstep(0.16, 0.0, cursorDist);
+    innerCore = pow(innerCore, 1.6);
+
+    // Warm cream-gold tint — Hermès silk in late-afternoon light
+    vec3 outerTint = vec3(0.135, 0.118, 0.088);   // warm cream
+    vec3 innerTint = vec3(0.220, 0.190, 0.140);   // lifted gold-cream
+
+    col += outerTint * outerGlow * strength;
+    col += innerTint * innerCore * strength;
+
+    // ── Subtle silk highlight from local geometry displacement ──
+    col += vDisplacement * 0.25;
+
+    gl_FragColor = vec4(col, uOpacity);
+  }
+`;
+
+const uniforms = {
+  uTime:           { value: 0 },
+  uMouse:          { value: new THREE.Vector2(0.5, 0.5) },
+  uMouseStrength:  { value: 0 },
+  uReducedMotion:  { value: PREFERS_REDUCED ? 1.0 : 0.0 },
+  uTexA:           { value: textures[0] },
+  uTexB:           { value: textures[1] },
+  uMix:            { value: 0 },
+  uOpacity:        { value: 1 },
+  uWeaveDirection: { value: 1.0 },
+  // Motion-driven 3D bend — peaks during scroll transitions, 0 at rest.
+  // The vertex shader uses these to billow the silk like a sail in wind.
+  uMotionStrength: { value: 0 },
+  uMotionDir:      { value: new THREE.Vector2(1, 0) }
+};
+
+const silkMaterial = new THREE.ShaderMaterial({
+  vertexShader:   silkVertex,
+  fragmentShader: silkFragment,
+  uniforms,
+  transparent: true,
+  side: THREE.DoubleSide
+});
+
+const silkGeometry = new THREE.PlaneGeometry(2.1, 2.1, 128, 128);
+const silkMesh     = new THREE.Mesh(silkGeometry, silkMaterial);
+scene.add(silkMesh);
+
+/* ────────────────────────────────────────────────────────────────────
+   Resize + responsive camera framing
+   ──────────────────────────────────────────────────────────────────── */
+function onResize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  // Pull camera back a bit on narrow viewports so the carré stays in frame
+  camera.position.z = w < 700 ? 6.5 : (w < 1100 ? 5.5 : 5);
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+window.addEventListener('resize', onResize);
+onResize();
+
+/* ────────────────────────────────────────────────────────────────────
+   Cursor → uMouse (UV space) + mouseenter/leave eased strength
+   ──────────────────────────────────────────────────────────────────── */
+const targetMouse = new THREE.Vector2(0.5, 0.5);
+
+stage.addEventListener('pointermove', (e) => {
+  const rect = renderer.domElement.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = 1 - (e.clientY - rect.top) / rect.height;
+  targetMouse.set(x, y);
+
+  // Ramp up if not already
+  gsap.to(uniforms.uMouseStrength, {
+    value: 1, duration: 0.6, ease: 'power2.out', overwrite: 'auto'
+  });
+});
+stage.addEventListener('pointerleave', () => {
+  gsap.to(uniforms.uMouseStrength, {
+    value: 0, duration: 1.2, ease: 'power2.inOut', overwrite: 'auto'
+  });
+});
+
+/* ────────────────────────────────────────────────────────────────────
+   Mesh state — declared BEFORE the render loop because tick() reads
+   meshBase every frame (would otherwise hit a temporal dead zone).
+   ──────────────────────────────────────────────────────────────────── */
+
+// Mesh choreography per act (positions the carré rests at).
+// Wider lateral range than before — the carré drifts visibly across
+// the page from one act to the next, never just translates a few pixels.
+const ACT_MESH_STATES = [
+  // Act 1 — hero, dead centre, slight Y tilt to expose volume from the start
+  { x:  0.00, y:  0.00, rx:  0.00, ry:  0.04, rz:  0.00, sc: 1.00 },
+  // Act 2 — drift far right, dramatic Y tilt (carré seen at angle)
+  { x:  0.75, y:  0.10, rx: -0.10, ry:  0.22, rz: -0.07, sc: 0.95 },
+  // Act 3 — drift far left, opposite Y tilt
+  { x: -0.78, y: -0.12, rx:  0.12, ry: -0.26, rz:  0.08, sc: 1.02 },
+  // Act 4 — drift mid-right, ready to dissolve
+  { x:  0.42, y:  0.14, rx: -0.10, ry:  0.18, rz: -0.06, sc: 0.98 }
+];
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  MESH BASE STATE                                                 ║
+   ║                                                                  ║
+   ║  Scroll choreography writes here. The render loop (tick) reads   ║
+   ║  meshBase and applies an additional ambient sway on top. This    ║
+   ║  separation lets us layer "wind" onto the scroll-driven path     ║
+   ║  without the two fighting each other.                            ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const meshBase = {
+  x:  ACT_MESH_STATES[0].x,
+  y:  ACT_MESH_STATES[0].y,
+  z:  0,
+  rx: ACT_MESH_STATES[0].rx,
+  ry: ACT_MESH_STATES[0].ry,
+  rz: ACT_MESH_STATES[0].rz,
+  sc: ACT_MESH_STATES[0].sc
+};
+
+/* ────────────────────────────────────────────────────────────────────
+   Render loop — applies meshBase from scroll, then layers an
+   ambient floating sway on top so the carré always feels alive.
+   ──────────────────────────────────────────────────────────────────── */
+const clock = new THREE.Clock();
+function tick() {
+  requestAnimationFrame(tick);
+
+  // Smooth-follow the cursor (the easing is what sells the silk)
+  uniforms.uMouse.value.lerp(targetMouse, 0.08);
+  uniforms.uTime.value = clock.getElapsedTime();
+
+  // ── Whole-mesh ambient sway — the "wind" the user feels ─────
+  // Layered on top of the scroll-driven meshBase so it's present
+  // at every act and through every transition. Frequencies are
+  // primes-ish so X / Y / rotation never sync into a pulse.
+  const t  = clock.getElapsedTime();
+  const sx = Math.sin(t * 0.32) * 0.014;
+  const sy = Math.cos(t * 0.41) * 0.011;
+  const rx = Math.sin(t * 0.27) * 0.012;
+  const ry = Math.cos(t * 0.23) * 0.014;
+  const rz = Math.sin(t * 0.31) * 0.008;
+
+  silkMesh.position.x = meshBase.x + sx;
+  silkMesh.position.y = meshBase.y + sy;
+  silkMesh.position.z = meshBase.z;
+  silkMesh.rotation.x = meshBase.rx + rx;
+  silkMesh.rotation.y = meshBase.ry + ry;
+  silkMesh.rotation.z = meshBase.rz + rz;
+  silkMesh.scale.setScalar(meshBase.sc);
+
+  renderer.render(scene, camera);
+}
+tick();
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  GSAP MASTER TIMELINE — scroll-coupled WebGL choreography        ║
+   ║                                                                  ║
+   ║  Strategy: one ScrollTrigger per act, scrubbed.                  ║
+   ║  Each act:                                                       ║
+   ║    – sets uTexA = previous, uTexB = current                      ║
+   ║    – tweens uMix 0 → 1 across the act's scroll range             ║
+   ║    – moves & rotates the silk plane                              ║
+   ║    – fades the editorial copy in & out                           ║
+   ║                                                                  ║
+   ║  Final act fades the mesh out and reveals the grid.              ║
+   ║                                                                  ║
+   ║  Reduced-motion fallback: uMix snaps instantly between textures, ║
+   ║  copy uses opacity-only reveal, mesh transforms are zeroed.      ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+gsap.registerPlugin(ScrollTrigger);
+
+// ───── Mesh choreography per act (subtle, restrained) ──────────────
+// ───── Mesh choreography per act — see top of script for ACT_MESH_STATES
+// and meshBase declarations (moved up to satisfy tick()'s read of meshBase).
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  TRANSITION ARCS — perpendicular bulge through each transition   ║
+   ║                                                                  ║
+   ║  Without these the carré lerps in a straight diagonal line,      ║
+   ║  which is what felt mechanical. Each entry adds a sin(p·π)       ║
+   ║  bulge perpendicular to the direct path — so the carré sweeps    ║
+   ║  through an arc, peaking mid-transition then settling back to    ║
+   ║  its target. Z bulge brings the silk forward (toward camera)     ║
+   ║  during the arc, rzKick adds a soft twist.                       ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const ACT_TRANSITION_ARCS = [
+  // 1 → 2: long sweep right — generous lift, billow forward
+  { x:  0.14, y:  0.42, z: 0.60, rzKick:  0.10 },
+  // 2 → 3: longest sweep across, dive down through the page space
+  { x: -0.06, y: -0.38, z: 0.70, rzKick: -0.12 },
+  // 3 → 4: lift back up to the right
+  { x:  0.10, y:  0.40, z: 0.55, rzKick:  0.08 }
+];
+
+// Easing for the time progression itself — softer in/out than linear lerp
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+// Heavier ease — more weight, more "silk being pulled" feel for position
+function easeInOutQuart(t) {
+  return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+}
+
+/* Wind-lift curve — what makes the carré stop feeling like a post-it.
+   Symmetric sin(p·π) peaks exactly at p=0.5 → looks too engineered.
+   This curve rises fast (silk caught by wind, lifts immediately) and
+   settles slowly (silk drifting back to rest with air resistance).   */
+function windLift(p) {
+  if (p < 0.40) return Math.sin(p / 0.40 * Math.PI / 2);             // fast climb
+  const q = (p - 0.40) / 0.60;
+  return Math.pow(Math.cos(q * Math.PI / 2), 1.4);                   // long tail
+}
+
+/* Lagged ease — slow start, fast finish. Used for ROTATION so it
+   reaches its target slightly behind position, like silk twisting
+   in arrears as the cloth catches up with the wind direction.       */
+function lagged(t) {
+  return Math.pow(t, 1.4);
+}
+
+// Initial state
+gsap.set(silkMesh.position,  { x: 0, y: 0, z: 0 });
+gsap.set(silkMesh.rotation,  { x: 0, y: 0, z: 0 });
+gsap.set(silkMesh.scale,     { x: 1, y: 1, z: 1 });
+
+// Reveal initial copy (Act 1)
+gsap.to('#act-1 .act-copy', {
+  opacity: 1, y: 0,
+  duration: 1.4, ease: 'power3.out', delay: 0.2
+});
+
+/* For each subsequent act, scrub a tween that:
+     – cross-fades textures
+     – arcs the mesh through to its new resting state (eased + bulged)
+     – fades the previous copy out and the current copy in
+   Higher scrub value = silkier follow, less snappy at borders.       */
+for (let i = 1; i < ACT_MESH_STATES.length; i++) {
+  const fromState = ACT_MESH_STATES[i - 1];
+  const toState   = ACT_MESH_STATES[i];
+  const arc       = ACT_TRANSITION_ARCS[i - 1];
+
+  ScrollTrigger.create({
+    trigger: `#act-${i + 1}`,
+    start: 'top 95%',
+    end:   'top 15%',
+    scrub: PREFERS_REDUCED ? false : 2.4,
+    onUpdate: (self) => {
+      const p = self.progress;
+
+      /* ── Silk-floating curve breakdown ───────────────────────
+         Symmetric sin/cos curves make the carré feel like it's on
+         rails. The asymmetric set below makes it feel airborne.   */
+      const positionEase = easeInOutQuart(p);     // position: heavy ease (weight)
+      const rotationEase = lagged(p);             // rotation: trails position
+      const lift         = windLift(p);           // bulge: rises fast, settles slow
+
+      // Wind-twist: rotation Z opposes lateral motion (banner-in-wind effect).
+      const motionDirX  = toState.x - fromState.x;
+      const motionDirY  = toState.y - fromState.y;
+      const motionMag   = Math.hypot(motionDirX, motionDirY) + 0.0001;
+      const windTwist   = -lift * motionDirX * 0.075;
+
+      // Micro-wobble: subtle high-frequency drift that fades out by p=1.
+      const wobX = Math.sin(p * Math.PI * 4.3) * (1 - p) * 0.014;
+      const wobY = Math.cos(p * Math.PI * 3.7) * (1 - p) * 0.011;
+      const wobR = Math.sin(p * Math.PI * 5.1) * Math.pow(1 - p, 1.3) * 0.009;
+
+      // Texture cross-fade (drives the weave shader, top-down direction)
+      uniforms.uTexA.value = textures[i - 1];
+      uniforms.uTexB.value = textures[i];
+      uniforms.uMix.value  = PREFERS_REDUCED ? (p > 0.5 ? 1 : 0) : positionEase;
+      uniforms.uOpacity.value = 1;
+      uniforms.uWeaveDirection.value = 1.0;       // weave-in (top → bottom)
+
+      /* 3D BEND — drives the silk billow during the transition.
+         Strength uses windLift so it rises fast and settles slowly,
+         matching the position trajectory. Direction is the unit
+         vector of the motion in screen-space.                       */
+      uniforms.uMotionStrength.value = lift;
+      uniforms.uMotionDir.value.set(
+        motionDirX / motionMag,
+        motionDirY / motionMag
+      );
+
+      const lerp = (a, b, t) => a + (b - a) * t;
+
+      // ── Position: heavy-eased lerp + asymmetric arc + micro-wobble ──
+      meshBase.x = lerp(fromState.x, toState.x, positionEase) + arc.x * lift + wobX;
+      meshBase.y = lerp(fromState.y, toState.y, positionEase) + arc.y * lift + wobY;
+      meshBase.z = arc.z * lift;                                           // catches air early, drifts back
+
+      // ── Rotation: lagged ease + wind-twist + wobble ─────────────────
+      meshBase.rx = lerp(fromState.rx, toState.rx, rotationEase);
+      meshBase.ry = lerp(fromState.ry, toState.ry, rotationEase);
+      meshBase.rz = lerp(fromState.rz, toState.rz, rotationEase)
+                  + arc.rzKick * lift
+                  + windTwist
+                  + wobR;
+
+      // Scale: smooth standard ease
+      meshBase.sc = lerp(fromState.sc, toState.sc, positionEase);
+    },
+    onLeave:     () => { uniforms.uMix.value = 1; uniforms.uMotionStrength.value = 0; },
+    onEnterBack: () => {}
+  });
+
+  // Copy reveal — separate trigger so it's tied to the act entering view
+  gsap.fromTo(`#act-${i + 1} .act-copy`,
+    { opacity: 0, y: 30 },
+    {
+      opacity: 1, y: 0,
+      duration: 1.4,
+      ease: 'power3.out',
+      scrollTrigger: {
+        trigger: `#act-${i + 1}`,
+        start: 'top 65%',
+        toggleActions: 'play none none reverse'
+      }
+    }
+  );
+}
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  SCROLL SNAP — magnet to nearest carré                           ║
+   ║                                                                  ║
+   ║  When the user stops scrolling between two acts, smoothly tween  ║
+   ║  to the closest one. Active scrolling is never fought (delay     ║
+   ║  is the time we wait after the wheel goes silent before snapping)║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+if (!PREFERS_REDUCED) {
+  ScrollTrigger.create({
+    trigger:    '#act-1',
+    start:      'top top',
+    endTrigger: '#act-4',
+    end:        'top top',
+    snap: {
+      // 4 acts → snap progress points 0, 1/3, 2/3, 1
+      snapTo: (progress) => {
+        const points = [0, 1/3, 2/3, 1];
+        return points.reduce((closest, p) =>
+          Math.abs(p - progress) < Math.abs(closest - progress) ? p : closest
+        );
+      },
+      duration: { min: 0.4, max: 0.9 },
+      delay:    0.18,                       // wait 180ms after scroll stops
+      ease:     'power2.inOut',
+      inertia:  false
+    }
+  });
+}
+
+/* ───── Final dissolve into the collection grid ────────────────────
+   When we approach the collection section, fade the mesh out so the
+   product cards take over visually.                                 */
+/* ───── Final dissolve — UNWEAVE the carré into the page ──────────
+   Reuses the weave shader but in reverse mode: the front sweeps
+   bottom → top, and uTexB is a cream texture matching the page bg.
+   The carré literally unweaves itself into nothing as the user
+   scrolls toward the collection grid — threads pulling apart.       */
+ScrollTrigger.create({
+  trigger: '#collection',
+  start: 'top bottom',
+  end:   'top center',
+  scrub: PREFERS_REDUCED ? false : 1.5,
+  onUpdate: (self) => {
+    const p = self.progress;
+    uniforms.uTexA.value           = textures[3];        // current carré (Paris qui Roule)
+    uniforms.uTexB.value           = creamTexture;       // page-color "void"
+    uniforms.uWeaveDirection.value = -1.0;               // bottom-up unweave
+    uniforms.uMix.value            = p;                  // 0 → 1 over the dissolve scroll
+    uniforms.uOpacity.value        = 1;                  // never fade — let the weave do the work
+    uniforms.uMotionStrength.value = 0;                  // no billow during dissolve
+  },
+  onLeaveBack: () => {
+    // User scrolled back up out of the dissolve — restore weave-in mode
+    // before the per-act triggers take over.
+    uniforms.uWeaveDirection.value = 1.0;
+    uniforms.uTexB.value           = textures[3];
+  }
+});
+
+// NOTE: .product-card and .collection-header animations are registered
+// AFTER the grid is populated below, to avoid "target not found" warnings.
+
+/* ───── Header: opaque on scroll past hero ─────────────────────────*/
+ScrollTrigger.create({
+  start: 100,
+  end: 99999,
+  onUpdate: (self) => {
+    document.querySelector('.header-container').classList.toggle('is-scrolled', self.scroll() > 100);
+  }
+});
+
+/* ───── Sticky CTA: slide up after the hero ────────────────────────*/
+const stickyEl = document.getElementById('sticky-cta');
+gsap.set(stickyEl, { y: '100%' });
+
+ScrollTrigger.create({
+  trigger: '#act-2',
+  start: 'top 80%',
+  onEnter:    () => gsap.to(stickyEl, { y: '0%',   duration: 0.7, ease: 'power3.out' }),
+  onLeaveBack:() => gsap.to(stickyEl, { y: '100%', duration: 0.5, ease: 'power3.in' })
+});
+
+/* ───── Track the currently-viewed carré → update sticky CTA ───────*/
+let currentCarreIndex = 0;
+function setCurrentCarre(idx) {
+  if (idx === currentCarreIndex) return;
+  currentCarreIndex = idx;
+  const c = CARRES[idx];
+  document.getElementById('sticky-name').textContent  = c.name;
+  document.getElementById('sticky-price').textContent = `${c.price} €`;
+  // Re-render thumbnail
+  const slot = document.getElementById('sticky-thumb');
+  slot.innerHTML = '';
+  slot.appendChild(makeThumbImg(idx));
+  // Reset the "added" state on the sticky button
+  document.getElementById('sticky-add').classList.remove('is-added');
+  document.getElementById('sticky-add').textContent = 'Ajouter au panier';
+}
+
+CARRES.forEach((_, i) => {
+  ScrollTrigger.create({
+    trigger: `#act-${i + 1}`,
+    start: 'top 50%',
+    end:   'bottom 50%',
+    onEnter:      () => setCurrentCarre(i),
+    onEnterBack:  () => setCurrentCarre(i)
+  });
+});
+
+// Initial sticky thumbnail
+const slot0 = document.getElementById('sticky-thumb');
+slot0.appendChild(makeThumbImg(0));
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  CART STATE — localStorage-backed                                ║
+   ║  Schema: { items: [{ id, name, price, qty }] }                   ║
+   ║  Survives full page refresh.                                     ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const CART_KEY = 'hermes_carre_cart_v1';
+
+function readCart() {
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    if (!raw) return { items: [] };
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.items)) return { items: [] };
+    return parsed;
+  } catch (e) {
+    console.warn('Cart read error', e);
+    return { items: [] };
+  }
+}
+function writeCart(state) {
+  try { localStorage.setItem(CART_KEY, JSON.stringify(state)); }
+  catch (e) { console.warn('Cart write error', e); }
+}
+
+let cartState = readCart();
+
+function cartCount(s) { return s.items.reduce((acc, it) => acc + it.qty, 0); }
+function cartTotal(s) { return s.items.reduce((acc, it) => acc + it.qty * it.price, 0); }
+
+function addToCart(carreId, qty = 1) {
+  const carre = CARRES.find(c => c.id === carreId);
+  if (!carre) return;
+  const existing = cartState.items.find(it => it.id === carreId);
+  if (existing) existing.qty += qty;
+  else cartState.items.push({ id: carre.id, name: carre.name, price: carre.price, qty });
+  writeCart(cartState);
+  refreshCartUI();
+  flashCart();
+}
+function removeFromCart(carreId) {
+  cartState.items = cartState.items.filter(it => it.id !== carreId);
+  writeCart(cartState);
+  refreshCartUI();
+}
+function setItemQty(carreId, qty) {
+  const it = cartState.items.find(i => i.id === carreId);
+  if (!it) return;
+  it.qty = Math.max(1, qty);
+  writeCart(cartState);
+  refreshCartUI();
+}
+
+function refreshCartUI() {
+  const count = cartCount(cartState);
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-drawer-count').textContent = count;
+  renderCartDrawer();
+}
+
+function flashCart() {
+  // Tiny pulse on the cart icon — celebration, never gimmick
+  const el = document.querySelector('#cart-toggle');
+  gsap.fromTo(el,
+    { scale: 1 },
+    { scale: 1.15, duration: 0.18, ease: 'power2.out', yoyo: true, repeat: 1 }
+  );
+}
+
+function renderCartDrawer() {
+  const items = cartState.items;
+  const wrap = document.getElementById('cart-items');
+  const footerWrap = document.getElementById('cart-footer-wrap');
+
+  if (items.length === 0) {
+    wrap.innerHTML = `
+      <div class="cart-empty">
+        <p>Votre panier est vide.</p>
+        <button class="btn btn--add" style="border-radius:2px;height:44px;padding:0 32px;" onclick="closeCart()">
+          Découvrir la collection
+        </button>
+      </div>`;
+    footerWrap.innerHTML = '';
+    return;
+  }
+
+  wrap.innerHTML = items.map(it => {
+    const carreIdx = CARRES.findIndex(c => c.id === it.id);
+    return `
+      <div class="cart-item" data-id="${it.id}">
+        <div class="cart-item-thumb" data-thumb-idx="${carreIdx}"></div>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${it.name}</div>
+          <div class="cart-item-price">${it.price} €</div>
+          <div class="cart-item-qty">Quantité : ${it.qty}</div>
+          <button class="cart-item-remove" data-remove="${it.id}">Retirer</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Inject thumbnails
+  wrap.querySelectorAll('[data-thumb-idx]').forEach(el => {
+    const idx = parseInt(el.dataset.thumbIdx, 10);
+    el.appendChild(makeThumbImg(idx));
+  });
+
+  // Hook remove buttons
+  wrap.querySelectorAll('[data-remove]').forEach(b => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeFromCart(b.dataset.remove);
+    });
+  });
+
+  footerWrap.innerHTML = `
+    <div class="cart-total">
+      <span class="label">Sous-total</span>
+      <span class="amount">${cartTotal(cartState)} €</span>
+    </div>
+    <div class="split-btn" style="height:48px;">
+      <button class="btn btn--add">Procéder au paiement</button>
+    </div>
+  `;
+}
+
+// Initial cart UI population (cart already loaded from localStorage)
+refreshCartUI();
+
+/* ───── Cart drawer open/close ────────────────────────────────────*/
+const drawer = document.getElementById('cart-drawer');
+const overlay = document.getElementById('cart-overlay');
+
+function openCart() {
+  drawer.classList.add('is-open'); overlay.classList.add('is-open');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+function closeCart() {
+  drawer.classList.remove('is-open'); overlay.classList.remove('is-open');
+  drawer.setAttribute('aria-hidden', 'true');
+}
+window.closeCart = closeCart;
+
+document.getElementById('cart-toggle').addEventListener('click', openCart);
+document.getElementById('cart-close').addEventListener('click', closeCart);
+document.getElementById('cart-overlay').addEventListener('click', closeCart);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCart(); });
+
+/* ───── Sticky-bar Add-to-Cart ────────────────────────────────────*/
+document.getElementById('sticky-add').addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  addToCart(CARRES[currentCarreIndex].id, 1);
+  btn.classList.add('is-added');
+  btn.textContent = 'Ajouté ✓';
+  setTimeout(() => {
+    btn.classList.remove('is-added');
+    btn.textContent = 'Ajouter au panier';
+  }, 1800);
+});
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  COLLECTION GRID — render 5 cards w/ qty selector + split btn    ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+const grid = document.getElementById('collection-grid');
+CARRES.forEach((c, i) => {
+  const card = document.createElement('article');
+  card.className = 'product-card';
+  card.dataset.id = c.id;
+  card.innerHTML = `
+    <a class="product-card-img" data-thumb-idx="${i}" href="#product/${c.id}" aria-label="Voir ${c.name}"></a>
+    <a class="product-card-name" href="#product/${c.id}">${c.name}</a>
+    <div class="product-card-price">${c.price} €</div>
+    <div class="product-card-meta" style="font-family:var(--font-secondary);font-size:14px;font-weight:var(--fw-500);text-transform:uppercase;color:var(--color-gray-medium);letter-spacing:1px;">${c.format} — ${c.designer}</div>
+    <div class="product-card-actions">
+      <div class="qty-selector" role="group" aria-label="Quantité ${c.name}">
+        <button type="button" class="qty-dec" aria-label="Diminuer">−</button>
+        <input type="number" class="qty-value" value="1" min="1" max="9" aria-label="Quantité"/>
+        <button type="button" class="qty-inc" aria-label="Augmenter">+</button>
+      </div>
+      <div class="split-btn split-btn--compact">
+        <button class="btn btn--add" type="button">Ajouter</button>
+      </div>
+    </div>
+  `;
+  grid.appendChild(card);
+
+  // Inject image thumbnail (data-URL — not a canvas clone, which doesn't carry pixels)
+  card.querySelector('[data-thumb-idx]').appendChild(makeThumbImg(i));
+
+  // Wire qty selector
+  const input = card.querySelector('.qty-value');
+  card.querySelector('.qty-dec').addEventListener('click', () => {
+    input.value = Math.max(1, parseInt(input.value, 10) - 1);
+  });
+  card.querySelector('.qty-inc').addEventListener('click', () => {
+    input.value = Math.min(9, parseInt(input.value, 10) + 1);
+  });
+
+  // Wire add button
+  card.querySelector('.btn--add').addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    addToCart(c.id, parseInt(input.value, 10));
+    btn.classList.add('is-added');
+    btn.textContent = 'Ajouté ✓';
+    setTimeout(() => {
+      btn.classList.remove('is-added');
+      btn.textContent = 'Ajouter';
+    }, 1600);
+  });
+});
+
+// ── Reveal animations registered HERE, after the cards exist in the DOM ──
+gsap.fromTo('.product-card',
+  { opacity: 0, y: 40 },
+  {
+    opacity: 1, y: 0,
+    duration: 0.9, ease: 'power3.out', stagger: 0.08,
+    scrollTrigger: { trigger: '#collection-grid', start: 'top 75%' }
+  }
+);
+gsap.fromTo('.collection-header > *',
+  { opacity: 0, y: 20 },
+  {
+    opacity: 1, y: 0,
+    duration: 0.8, ease: 'power2.out', stagger: 0.1,
+    scrollTrigger: { trigger: '.collection-header', start: 'top 80%' }
+  }
+);
+
+/* ╔══════════════════════════════════════════════════════════════════╗
+   ║  HASH ROUTER — product pages + M2UX deliverables                 ║
+   ║                                                                  ║
+   ║  Routes:                                                         ║
+   ║   #            → main scrollytelling experience                  ║
+   ║   #product/cXX → product page for the given carré                ║
+   ║   #proto-persona, #experience-map, #user-flow → M2UX deliverables║
+   ║                                                                  ║
+   ║  When any non-default route is active:                           ║
+   ║   - body.has-route-view hides #main-element, breadcrumb, sticky  ║
+   ║   - WebGL canvas opacity goes to 0 (rendering still ticks)       ║
+   ║   - The matching .route-view gets .is-active class               ║
+   ╚══════════════════════════════════════════════════════════════════╝ */
+
+const ROUTES = {
+  'proto-persona':   'proto-persona-view',
+  'experience-map':  'experience-map-view',
+  'user-flow':       'user-flow-view'
+};
+
+// Views that are M2UX deliverables — these hide more chrome (header,
+// footer) than the product page, which keeps the full e-commerce shell.
+const DELIVERABLE_VIEWS = new Set([
+  'proto-persona-view',
+  'experience-map-view',
+  'user-flow-view'
+]);
+
+function showMainView() {
+  document.body.classList.remove('has-route-view', 'is-deliverable');
+  document.querySelectorAll('.route-view').forEach(v => v.classList.remove('is-active'));
+  // Refresh ScrollTrigger so it recalculates positions of acts
+  ScrollTrigger.refresh();
+}
+
+function showRouteView(viewId) {
+  document.body.classList.add('has-route-view');
+  document.body.classList.toggle('is-deliverable', DELIVERABLE_VIEWS.has(viewId));
+  document.querySelectorAll('.route-view').forEach(v => v.classList.remove('is-active'));
+  const view = document.getElementById(viewId);
+  if (view) view.classList.add('is-active');
+  window.scrollTo(0, 0);
+}
+
+function showProductView(carreId) {
+  const carre = CARRES.find(c => c.id === carreId);
+  if (!carre) return showMainView();
+
+  // Populate the product template
+  document.getElementById('product-eyebrow').textContent = `${carre.format} — ${carre.designer}`;
+  document.getElementById('product-title').textContent   = carre.name;
+  document.getElementById('product-designer').textContent = `« ${carre.quote} »`;
+  document.getElementById('product-description').textContent = carre.meta;
+  document.getElementById('product-reference').textContent   = carre.id.toUpperCase() + 'Sv01';
+  document.getElementById('product-dimensions').textContent  = carre.format === 'Carré 90' ? '90 × 90 cm' : '70 × 70 cm';
+  document.getElementById('product-price').textContent       = `${carre.price} €`;
+
+  // Image
+  const imgSlot = document.getElementById('product-image');
+  imgSlot.innerHTML = '';
+  imgSlot.appendChild(makeThumbImg(CARRES.indexOf(carre)));
+
+  // Thumbnails (just one for now — the same image in different "views")
+  const thumbsSlot = document.getElementById('product-thumbs');
+  thumbsSlot.innerHTML = '';
+  for (let k = 0; k < 4; k++) {
+    const t = document.createElement('button');
+    t.className = 'product-thumb' + (k === 0 ? ' is-active' : '');
+    t.appendChild(makeThumbImg(CARRES.indexOf(carre)));
+    thumbsSlot.appendChild(t);
+  }
+
+  // Other carrés
+  const otherGrid = document.getElementById('product-other-grid');
+  otherGrid.innerHTML = '';
+  CARRES.filter(c => c.id !== carreId).forEach(other => {
+    const card = document.createElement('a');
+    card.className = 'product-card';
+    card.href = `#product/${other.id}`;
+    card.innerHTML = `
+      <div class="product-card-img" data-thumb-idx="${CARRES.indexOf(other)}"></div>
+      <div class="product-card-name">${other.name}</div>
+      <div class="product-card-price">${other.price} €</div>
+      <div class="product-card-meta" style="font-family:var(--font-secondary);font-size:14px;font-weight:var(--fw-500);text-transform:uppercase;color:var(--color-gray-medium);letter-spacing:1px;">${other.format} — ${other.designer}</div>
+    `;
+    card.querySelector('[data-thumb-idx]').appendChild(makeThumbImg(CARRES.indexOf(other)));
+    otherGrid.appendChild(card);
+  });
+
+  // Wire qty selector and add button (recreate handlers each route view)
+  const qtyInput = document.getElementById('product-qty');
+  qtyInput.value = 1;
+  document.querySelector('#product-view .qty-dec').onclick = () => {
+    qtyInput.value = Math.max(1, parseInt(qtyInput.value, 10) - 1);
+  };
+  document.querySelector('#product-view .qty-inc').onclick = () => {
+    qtyInput.value = Math.min(9, parseInt(qtyInput.value, 10) + 1);
+  };
+  const addBtn = document.getElementById('product-add');
+  addBtn.classList.remove('is-added');
+  addBtn.textContent = 'Ajouter au panier';
+  addBtn.onclick = () => {
+    addToCart(carre.id, parseInt(qtyInput.value, 10));
+    addBtn.classList.add('is-added');
+    addBtn.textContent = 'Ajouté au panier ✓';
+    setTimeout(() => {
+      addBtn.classList.remove('is-added');
+      addBtn.textContent = 'Ajouter au panier';
+    }, 1800);
+  };
+
+  showRouteView('product-view');
+}
+
+function handleRoute() {
+  const hash = window.location.hash.replace(/^#\/?/, '');
+  if (!hash) return showMainView();
+
+  // Product route: "product/cXX"
+  if (hash.startsWith('product/')) {
+    const carreId = hash.split('/')[1];
+    return showProductView(carreId);
+  }
+
+  // Direct deliverable routes
+  const viewId = ROUTES[hash];
+  if (viewId) return showRouteView(viewId);
+
+  // Unknown — fallback to main
+  showMainView();
+}
+
+window.addEventListener('hashchange', handleRoute);
+window.addEventListener('DOMContentLoaded', handleRoute);
+
+// Back links inside route views
+document.querySelectorAll('[data-route-back]').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.hash = '';
+    showMainView();
+  });
+});
+
+
+window.addEventListener('load', () => {
+  // Animate the loader bar fill, then unveil
+  gsap.to('#loader-bar', {
+    width: '100%', duration: 0.9, ease: 'power2.inOut',
+    onComplete: () => {
+      gsap.to('.loader', {
+        opacity: 0, duration: 0.8, ease: 'power2.inOut',
+        onComplete: () => {
+          document.getElementById('loader').style.display = 'none';
+          ScrollTrigger.refresh();
+        }
+      });
+    }
+  });
+
+  // Header logo subtle entrance
+  gsap.from('.header-logo img', {
+    opacity: 0, y: -8, duration: 1.0, ease: 'power3.out', delay: 0.6
+  });
+});
+
+// Set CSS rule for #loader-bar (avoid CSS-only keyframes per brief)
+(function injectLoaderBarStyle() {
+  const s = document.createElement('style');
+  s.textContent = `#loader-bar{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--color-black);}`;
+  document.head.appendChild(s);
+})();
+
+</script>
+
+</body>
+</html>
